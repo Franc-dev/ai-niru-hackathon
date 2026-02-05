@@ -8,21 +8,23 @@ This document defines the safety rules and escalation procedures for the AI Niru
 
 ### Content Moderation Rules
 
-**Status:** To be defined based on use case
+**Status:** Defined for MVP (policy-level, implementation pending)
 
 #### Categories to Monitor
-- [ ] Harmful content
-- [ ] Hate speech
-- [ ] Violence
-- [ ] Self-harm
-- [ ] Illegal activities
-- [ ] Personal information requests
-- [ ] Spam/abuse
+- [x] Harmful content (e.g. threats, self-harm, glorification of harm)
+- [x] Hate speech (targeting protected classes)
+- [x] Violence (graphic or non-graphic)
+- [x] Self-harm (ideation, intent, instructions)
+- [x] Illegal activities (planning, instructions, admission of serious crime)
+- [x] Personal information requests (doxxing, sensitive data disclosure)
+- [x] Spam/abuse (harassment, scams, repetitive unwanted content)
 
-#### Rule Implementation
+#### Rule Implementation (MVP policy)
 - Rules will be checked in `backend/services/agent.py`
-- Each message will be evaluated before processing
+- Each message will be evaluated before processing and response generation
 - Rules can be configured via settings or database
+- Each violation is mapped to a severity level (`low`, `medium`, `high`, `critical`)
+- High/critical violations will trigger escalation according to the flow below
 
 ### Safety Check Response
 
@@ -96,17 +98,17 @@ Response         └─────────────────┘
 ### Current State
 - [x] Safety rule structure defined
 - [x] Escalation flow documented
-- [ ] Safety rules implemented
+- [x] MVP safety policy defined (this document)
+- [ ] Safety rules implemented in code
 - [ ] Escalation system implemented
 - [ ] Human review queue system
 - [ ] Crisis resource integration
 
 ### Next Steps
-1. Define specific safety rules based on use case
-2. Implement safety checking service
-3. Build escalation system
-4. Create moderation dashboard (optional)
-5. Integrate crisis resources if needed
+1. Implement safety checking service based on this MVP policy
+2. Wire escalation decisions into logging/alerting and UI
+3. Build moderation dashboard (optional)
+4. Integrate crisis resources if needed and appropriate
 
 ## Configuration
 

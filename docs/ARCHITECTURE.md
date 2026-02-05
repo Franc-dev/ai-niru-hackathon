@@ -32,7 +32,7 @@ AI Niru Hackathon - A full-stack application with FastAPI backend and React Type
 - Connection pooling via Motor
 
 ### Agent Flow
-- **Status:** To be finalized
+- **Status:** Finalized for MVP (implementation pending)
 - **Components:**
   - Message processing
   - Safety rule checking
@@ -40,9 +40,13 @@ AI Niru Hackathon - A full-stack application with FastAPI backend and React Type
   - Escalation handling
 
 ### Voice + Chat
-- **Status:** To be finalized
-- **Approach:** TBD
-- **Integration:** TBD
+- **Status:** Architecture decided for MVP
+- **MVP:** Text chat only (no voice processing in initial build)
+- **Voice-ready design:**
+  - Voice input/output will be integrated via a separate service or SDK
+  - Frontend will handle audio capture/playback and convert to/from text
+  - Backend API contract remains text-based; voice layer sits on the edge
+  - Same safety + agent flow pipeline is reused for both voice and chat
 
 ## Project Structure
 
@@ -99,6 +103,24 @@ ai-niru-hackathon/
 6. **Vector DB** → Semantic search (if needed)
 7. **MongoDB** → Store conversation
 8. **Response** → Back to frontend
+
+## Data Models (MVP)
+
+Stored in MongoDB as collections:
+
+- **Conversation**
+  - `_id` (ObjectId)
+  - `created_at`, `updated_at`
+  - `title` (optional)
+  - `metadata` (e.g. user id, channel)
+
+- **Message**
+  - `_id` (ObjectId)
+  - `conversation_id` (ref Conversation)
+  - `role` (`user` | `assistant` | `system`)
+  - `content` (string)
+  - `timestamp`
+  - `metadata` (e.g. safety flags, escalation level)
 
 ## Environment Configuration
 

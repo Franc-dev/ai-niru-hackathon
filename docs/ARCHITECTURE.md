@@ -127,9 +127,10 @@ Stored in MongoDB as collections:
 ### Backend (.env)
 - `MONGODB_URL` - MongoDB connection string
 - `MONGODB_DB_NAME` - Database name
-- `VECTOR_DB_TYPE` - Vector DB provider
-- `VECTOR_DB_URL` - Vector DB URL
-- `VECTOR_DB_API_KEY` - Vector DB API key
+- `VECTOR_DB_TYPE` - Vector DB provider (e.g. chroma)
+- `CHROMA_PERSIST_DIR` - Chroma persistence directory
+- `LOCAL_MODEL_URL` - Our trained model chat endpoint
+- `LOCAL_EMBEDDING_URL` - Our trained model embedding endpoint
 - `ENVIRONMENT` - dev/staging/prod
 - `DEBUG` - Debug mode
 

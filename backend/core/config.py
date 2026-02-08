@@ -14,11 +14,18 @@ class Settings(BaseSettings):
     MONGODB_URL: str = "mongodb://localhost:27017"
     MONGODB_DB_NAME: str = "ai_niru"
     
-    # Vector DB (placeholder - can be Pinecone, Weaviate, etc.)
+    # Vector DB (placeholder | chroma)
     VECTOR_DB_TYPE: str = "placeholder"
     VECTOR_DB_URL: str = ""
     VECTOR_DB_API_KEY: str = ""
-    
+    CHROMA_PERSIST_DIR: str = "./chroma_data"
+    RAG_COLLECTION_NAME: str = "rag_docs"
+    RAG_TOP_K: int = 5
+
+    # Local model (trained on our synthetic data)
+    LOCAL_MODEL_URL: str = "http://localhost:8001/v1/chat"
+    LOCAL_EMBEDDING_URL: str = "http://localhost:8001/v1/embeddings"
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

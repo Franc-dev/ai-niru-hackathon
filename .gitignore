@@ -51,3 +51,9 @@ Thumbs.db
 dist/
 build/
 *.local
+
+# Training outputs
+training/artifacts/
+training/reports/
+data/training/
+!data/training/.gitkeep

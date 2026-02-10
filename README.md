@@ -55,7 +55,9 @@ ai-niru-hackathon/
 
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Safety Rules](./docs/SAFETY_RULES.md)
+- [Training Alignment](./docs/TRAINING_ROADMAP_ALIGNMENT.md)
 - [Tasks](./tasks/TASK-001.md)
+- [Training Workflow](./training/README.md)
 
 ## Development
 

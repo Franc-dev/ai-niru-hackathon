@@ -1,5 +1,4 @@
 # AI Niru Hackathon
-
 Full-stack application with FastAPI backend and React TypeScript frontend.
 
 ## Tech Stack
@@ -7,14 +6,14 @@ Full-stack application with FastAPI backend and React TypeScript frontend.
 - **Backend:** FastAPI + MongoDB
 - **Frontend:** React + TypeScript + TanStack Query
 - **Build Tool:** Vite
-
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
 - MongoDB (local or Atlas)
-
+- 
 ### Backend Setup
 
 ```bash
@@ -26,7 +25,6 @@ cp .env.example .env
 # Edit .env with your MongoDB URL
 uvicorn main:app --reload
 ```
-
 Backend runs on `http://localhost:8000`
 
 ### Frontend Setup
@@ -38,7 +36,6 @@ cp .env.example .env
 # Edit .env if needed
 npm run dev
 ```
-
 Frontend runs on `http://localhost:3000`
 
 ## Project Structure

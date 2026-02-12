@@ -57,7 +57,7 @@ Quick setup instructions for getting the project running locally.
    ```bash
    cd frontend
    ```
-
+   
 2. **Install dependencies**
    ```bash
    npm install

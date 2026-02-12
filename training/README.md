@@ -1,6 +1,6 @@
 # EMNS Training Workflow
 
-This workflow is aligned to the EM-NS roadmap:
+This workflow is aligned to the EMNS roadmap:
 - Chat-only model training (no voice model training).
 - Bilingual English + Swahili data.
 - Safety-centered evaluation before release.

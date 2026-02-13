@@ -1,4 +1,4 @@
-# Task 002: Make the System Work End-to-End
+# Task 002: Make the System Work End-to-End.
 
 **Status:** ⚪ Not Started  
 **Priority:** High  
@@ -93,4 +93,4 @@ Make the system work end-to-end: backend API foundation, agent reasoning (ReAct)
 
 - ReAct can start minimal: one “search” action that calls RAG; expand tools later.
 - RAG ingestion can be CLI or one-off script; retrieval is the critical path for “grounded responses.”
-- Frontend can be a single page with messages + input; polish in later tasks.
+- Frontend can be a single page with messages + input; polish in later tasks..

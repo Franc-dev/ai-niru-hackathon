@@ -1,0 +1,73 @@
+# Single-run sanity check config for EM-NS LoRA training.
+# Purpose: validate the pipeline works end-to-end before burning GPU hours.
+#
+# Usage:
+#   det -m http://localhost:8080 experiment create \
+#       training/determined/experiment_const.yaml .
+
+name: emns-lora-sanity-check
+description: Single LoRA fine-tuning run with fixed hyperparameters
+
+environment:
+  image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-0.31.1
+
+resources:
+  slots_per_trial: 1
+
+searcher:
+  name: single
+  metric: eval_loss
+  smaller_is_better: true
+  max_length:
+    epochs: 2
+
+hyperparameters:
+  base_model:
+    type: const
+    val: "Qwen/Qwen2.5-3B-Instruct"
+  lora_r:
+    type: const
+    val: 16
+  lora_alpha:
+    type: const
+    val: 32
+  lora_dropout:
+    type: const
+    val: 0.05
+  learning_rate:
+    type: const
+    val: 2e-4
+  batch_size:
+    type: const
+    val: 2
+  grad_accum:
+    type: const
+    val: 8
+  warmup_ratio:
+    type: const
+    val: 0.03
+  weight_decay:
+    type: const
+    val: 0.01
+  num_epochs:
+    type: const
+    val: 2
+  max_seq_length:
+    type: const
+    val: 1024
+  language_filter:
+    type: const
+    val: "all"
+  seed:
+    type: const
+    val: 42
+
+entrypoint: python3 training/determined/train_det.py
+
+bind_mounts:
+  - host_path: /tmp/determined-checkpoints
+    container_path: /tmp/determined-checkpoints
+
+data:
+  train_file: data/training/combined_train.jsonl
+  eval_file: data/training/combined_val.jsonl

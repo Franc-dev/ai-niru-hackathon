@@ -2,7 +2,8 @@
 Run full EM-NS training pipeline end-to-end.
 
 Stages:
-1) Build bilingual data from MentalChat16K
+0) Build combined bilingual dataset (EN + native SW)
+1) Build bilingual data from MentalChat16K (legacy fallback)
 2) Merge localized Kenyan template data
 3) Train Qwen LoRA adapter
 """
@@ -47,6 +48,13 @@ def run_cmd(cmd: list[str], stage: str, status_path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--python-bin", default=sys.executable)
+    parser.add_argument(
+        "--skip-combined-build",
+        action="store_true",
+        help="Skip Stage 0 (combined bilingual dataset build).",
+    )
+    parser.add_argument("--max-en-rows", type=int, default=0, help="Limit EN rows (0=all)")
+    parser.add_argument("--max-sw-rows", type=int, default=0, help="Limit SW rows (0=all)")
     parser.add_argument("--build-backend", choices=("marian", "google"), default="marian")
     parser.add_argument("--build-output-dir", default="data/training")
     parser.add_argument("--build-status-file", default="training/reports/build_status.json")
@@ -59,8 +67,8 @@ def main() -> None:
     parser.add_argument("--build-translation-num-beams", type=int, default=1)
     parser.add_argument("--pipeline-status-file", default="training/reports/pipeline_status.json")
     parser.add_argument("--base-model", default="Qwen/Qwen2.5-3B-Instruct")
-    parser.add_argument("--train-file", default="data/training/mentalchat_bilingual_train.jsonl")
-    parser.add_argument("--eval-file", default="data/training/mentalchat_bilingual_val.jsonl")
+    parser.add_argument("--train-file", default="data/training/combined_train.jsonl")
+    parser.add_argument("--eval-file", default="data/training/combined_val.jsonl")
     parser.add_argument("--output-dir", default="training/artifacts/emns-chat-lora-v1")
     parser.add_argument("--num-epochs", type=float, default=2.0)
     parser.add_argument("--batch-size", type=int, default=2)
@@ -72,6 +80,22 @@ def main() -> None:
 
     status_path = Path(args.pipeline_status_file)
     write_status(status_path, stage="pipeline", state="starting")
+
+    # ------------------------------------------------------------------
+    # Stage 0: Build combined bilingual dataset (EN + native SW)
+    # ------------------------------------------------------------------
+    if not args.skip_combined_build:
+        combined_cmd = [
+            args.python_bin,
+            "training/scripts/build_combined_dataset.py",
+            "--output-dir",
+            args.build_output_dir,
+            "--max-en-rows",
+            str(args.max_en_rows),
+            "--max-sw-rows",
+            str(args.max_sw_rows),
+        ]
+        run_cmd(combined_cmd, stage="build_combined", status_path=status_path)
 
     build_cmd = [
         args.python_bin,

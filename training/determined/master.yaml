@@ -1,0 +1,17 @@
+# Determined master configuration for EM-NS training.
+
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp/determined-checkpoints
+  # TODO: For cloud deployments, switch to S3 or GCS:
+  # type: s3
+  # bucket: emns-checkpoints
+  # access_key: ...
+  # secret_key: ...
+
+db:
+  host: db
+  port: 5432
+  name: determined
+  user: postgres
+  password: postgres

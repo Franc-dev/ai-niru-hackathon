@@ -193,7 +193,7 @@ def main() -> None:
         logging_steps=args.logging_steps,
         save_steps=args.save_steps,
         eval_steps=args.eval_steps,
-        evaluation_strategy="steps" if eval_ds is not None else "no",
+        eval_strategy="steps" if eval_ds is not None else "no",
         save_strategy="steps",
         bf16=(dtype == torch.bfloat16),
         fp16=(dtype == torch.float16),

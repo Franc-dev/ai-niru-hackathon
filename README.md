@@ -13,7 +13,7 @@ Full-stack application with FastAPI backend and React TypeScript frontend.
 - Python 3.11+
 - Node.js 18+
 - MongoDB (local or Atlas)
-- 
+  
 ### Backend Setup
 
 ```bash

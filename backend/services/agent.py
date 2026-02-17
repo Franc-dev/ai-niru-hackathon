@@ -20,6 +20,11 @@ Format your response as follows:
 
 You may use search_knowledge zero or more times, then provide a Final Answer. Base your answer on the observations from search when relevant. If the knowledge base has no relevant information, say so and answer from general knowledge."""
 
+LANGUAGE_PROMPTS = {
+    "en": "When you provide Final Answer, write in English.",
+    "sw": "When you provide Final Answer, write in Swahili.",
+}
+
 
 def _parse_action_or_final(text: str) -> tuple[str | None, str | None]:
     """Returns (action_type, argument) or (None, final_answer). action_type is 'search_knowledge', argument is the query."""
@@ -65,13 +70,17 @@ class AgentService:
         message: str,
         conversation_id: str,
         history: list[dict[str, Any]],
+        language: str = "en",
     ) -> str:
         """
         Run ReAct loop. history is list of { role, content }.
         Returns final assistant response string.
         """
         messages: list[dict[str, str]] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": f"{SYSTEM_PROMPT}\n\n{LANGUAGE_PROMPTS.get(language, LANGUAGE_PROMPTS['en'])}",
+            },
         ]
         for h in history:
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})

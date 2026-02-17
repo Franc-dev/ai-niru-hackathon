@@ -13,33 +13,72 @@ CONVERSATIONS_COLLECTION = "conversations"
 MESSAGES_COLLECTION = "messages"
 
 
+def _serialize_datetime(value: datetime | None) -> str | None:
+    if not value:
+        return None
+    return value.isoformat()
+
+
+def _normalize_language(value: str | None) -> str:
+    return "sw" if value == "sw" else "en"
+
+
+def _serialize_conversation(doc: dict[str, Any]) -> dict[str, Any]:
+    conversation_id = str(doc["_id"])
+    return {
+        "conversation_id": conversation_id,
+        "title": doc.get("title"),
+        "language": _normalize_language(doc.get("language")),
+        "created_at": _serialize_datetime(doc.get("created_at")),
+        "updated_at": _serialize_datetime(doc.get("updated_at")),
+    }
+
+
+async def ensure_conversation_indexes() -> None:
+    """Create indexes needed by chat queries."""
+    database = get_database()
+    await database[CONVERSATIONS_COLLECTION].create_index([("user_id", 1), ("updated_at", -1)])
+    await database[MESSAGES_COLLECTION].create_index([("conversation_id", 1), ("timestamp", 1)])
+
+
 async def create_conversation(
+    user_id: str,
     title: Optional[str] = None,
+    language: str = "en",
     metadata: Optional[dict[str, Any]] = None,
 ) -> str:
     """Create a new conversation. Returns conversation_id (str)."""
     database = get_database()
     now = datetime.utcnow()
     doc = {
+        "user_id": user_id,
         "created_at": now,
         "updated_at": now,
         "title": title,
+        "title_auto_generated": False,
+        "language": _normalize_language(language),
         "metadata": metadata or {},
     }
     result = await database[CONVERSATIONS_COLLECTION].insert_one(doc)
     return str(result.inserted_id)
 
 
-async def get_or_create_conversation(conversation_id: Optional[str] = None) -> str:
+async def get_or_create_conversation(
+    user_id: str,
+    conversation_id: Optional[str] = None,
+    language: str = "en",
+) -> str:
     """Get existing conversation id or create a new one. Returns conversation_id (str)."""
     if conversation_id:
         try:
             database = get_database()
-            if await database[CONVERSATIONS_COLLECTION].find_one({"_id": ObjectId(conversation_id)}):
+            if await database[CONVERSATIONS_COLLECTION].find_one(
+                {"_id": ObjectId(conversation_id), "user_id": user_id}
+            ):
                 return conversation_id
         except Exception:
             pass
-    return await create_conversation()
+    return await create_conversation(user_id=user_id, language=language)
 
 
 async def add_message(
@@ -83,10 +122,99 @@ async def get_conversation_messages(conversation_id: str) -> list[dict]:
     return messages
 
 
-async def conversation_exists(conversation_id: str) -> bool:
-    """Check if a conversation exists."""
+async def conversation_exists(conversation_id: str, user_id: str) -> bool:
+    """Check if a conversation exists for a user."""
     database = get_database()
     try:
-        return await database[CONVERSATIONS_COLLECTION].find_one({"_id": ObjectId(conversation_id)}) is not None
+        return await database[CONVERSATIONS_COLLECTION].find_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id}
+        ) is not None
+    except Exception:
+        return False
+
+
+async def get_conversation(conversation_id: str, user_id: str) -> dict[str, Any] | None:
+    """Get conversation metadata for a user."""
+    database = get_database()
+    try:
+        doc = await database[CONVERSATIONS_COLLECTION].find_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id}
+        )
+    except Exception:
+        return None
+    if not doc:
+        return None
+    return _serialize_conversation(doc)
+
+
+async def list_conversations(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    """List user conversations with latest preview text."""
+    database = get_database()
+    cursor = (
+        database[CONVERSATIONS_COLLECTION]
+        .find({"user_id": user_id})
+        .sort("updated_at", -1)
+        .limit(limit)
+    )
+
+    conversations: list[dict[str, Any]] = []
+    async for doc in cursor:
+        conversation_id = str(doc["_id"])
+        latest_message = await (
+            database[MESSAGES_COLLECTION]
+            .find({"conversation_id": conversation_id})
+            .sort("timestamp", -1)
+            .limit(1)
+            .to_list(length=1)
+        )
+        preview = latest_message[0]["content"] if latest_message else ""
+        item = _serialize_conversation(doc)
+        item["preview"] = preview
+        conversations.append(item)
+    return conversations
+
+
+async def update_conversation_language(conversation_id: str, user_id: str, language: str) -> bool:
+    """Update conversation language for a user."""
+    database = get_database()
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].update_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id},
+            {
+                "$set": {
+                    "language": _normalize_language(language),
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+        return result.modified_count > 0
+    except Exception:
+        return False
+
+
+async def set_conversation_title_if_empty(conversation_id: str, user_id: str, title: str) -> bool:
+    """Set generated title once, if the conversation title is empty."""
+    database = get_database()
+    if not title:
+        return False
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].update_one(
+            {
+                "_id": ObjectId(conversation_id),
+                "user_id": user_id,
+                "$or": [
+                    {"title": None},
+                    {"title": ""},
+                ],
+            },
+            {
+                "$set": {
+                    "title": title,
+                    "title_auto_generated": True,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+        return result.modified_count > 0
     except Exception:
         return False

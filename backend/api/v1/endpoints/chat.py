@@ -2,22 +2,50 @@
 Chat Endpoints
 """
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
-from typing import List, Optional
+from typing import List, Literal, Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.api.deps import get_current_user
 from backend.repositories.conversation_repo import (
-    get_or_create_conversation,
     add_message,
-    get_conversation_messages,
     conversation_exists,
+    get_conversation,
+    get_conversation_messages,
+    get_or_create_conversation,
+    list_conversations,
+    set_conversation_title_if_empty,
+    update_conversation_language,
 )
-from backend.services.safety import check_safety_rules
+from backend.repositories.user_repo import update_user_preferred_language
 from backend.services.agent import agent_service
+from backend.services.safety import check_safety_rules
 
 router = APIRouter()
 
-REFUSAL_MESSAGE = "I can't help with that. How else can I assist you?"
+LanguageCode = Literal["en", "sw"]
+
+REFUSAL_MESSAGES: dict[LanguageCode, str] = {
+    "en": "I can't help with that. How else can I assist you?",
+    "sw": "Siwezi kusaidia kwa hilo. Naweza kukusaidia vipi vinginevyo?",
+}
+
+
+def normalize_language(language: str | None) -> LanguageCode:
+    """Map unknown language input to supported values."""
+    return "sw" if language == "sw" else "en"
+
+
+def generate_title_from_response(response_text: str, max_length: int = 72) -> str:
+    """Build a one-line title from the first response paragraph."""
+    if not response_text:
+        return ""
+    first_paragraph = response_text.strip().split("\n\n")[0].strip()
+    normalized = " ".join(first_paragraph.replace("#", "").replace("*", "").split())
+    if len(normalized) <= max_length:
+        return normalized
+    return f"{normalized[:max_length - 1].rstrip()}…"
 
 
 class ChatMessage(BaseModel):
@@ -30,29 +58,74 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
     conversation_id: Optional[str] = None
     history: Optional[List[ChatMessage]] = None
+    language: Optional[LanguageCode] = None
 
 
 class ChatResponse(BaseModel):
     response: str
     conversation_id: str
+    conversation_title: str | None = None
+    language: LanguageCode = "en"
     timestamp: str
 
 
+class ConversationHistoryResponse(BaseModel):
+    conversation_id: str
+    title: str | None = None
+    language: LanguageCode = "en"
+    messages: list[ChatMessage]
+
+
+class ConversationListItem(BaseModel):
+    conversation_id: str
+    title: str | None = None
+    language: LanguageCode = "en"
+    created_at: str | None = None
+    updated_at: str | None = None
+    preview: str = ""
+
+
 @router.post("/", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, current_user: dict = Depends(get_current_user)):
     """
-    Chat endpoint: get/create conversation, safety check, agent (ReAct + RAG), persist and return.
+    Chat endpoint: user-scoped conversation, safety check, agent (ReAct + RAG), persist and return.
     """
     try:
-        conversation_id = await get_or_create_conversation(request.conversation_id)
-        await add_message(conversation_id, "user", request.message)
+        user_id = current_user["id"]
+        selected_language = normalize_language(request.language or current_user.get("preferred_language"))
+
+        conversation_id = await get_or_create_conversation(
+            user_id=user_id,
+            conversation_id=request.conversation_id,
+            language=selected_language,
+        )
+
+        if request.language:
+            await update_conversation_language(conversation_id, user_id, request.language)
+            await update_user_preferred_language(user_id, request.language)
+
+        await add_message(
+            conversation_id,
+            "user",
+            request.message,
+            metadata={"language": selected_language},
+        )
 
         safety = check_safety_rules(request.message)
         if not safety.get("safe", True):
-            await add_message(conversation_id, "assistant", REFUSAL_MESSAGE)
+            refusal = REFUSAL_MESSAGES[selected_language]
+            await add_message(
+                conversation_id,
+                "assistant",
+                refusal,
+                metadata={"language": selected_language, "safety_refusal": True},
+            )
+            conversation = await get_conversation(conversation_id, user_id)
             return ChatResponse(
-                response=REFUSAL_MESSAGE,
+                response=refusal,
                 conversation_id=conversation_id,
+                conversation_title=conversation.get("title") if conversation else None,
+                language=selected_language,
                 timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
@@ -63,24 +136,56 @@ async def chat(request: ChatRequest):
             request.message,
             conversation_id,
             history_for_agent,
+            language=selected_language,
         )
-        await add_message(conversation_id, "assistant", response_text)
+        await add_message(
+            conversation_id,
+            "assistant",
+            response_text,
+            metadata={"language": selected_language},
+        )
 
+        title = generate_title_from_response(response_text)
+        if title:
+            await set_conversation_title_if_empty(conversation_id, user_id, title)
+
+        conversation = await get_conversation(conversation_id, user_id)
         return ChatResponse(
             response=response_text,
             conversation_id=conversation_id,
+            conversation_title=conversation.get("title") if conversation else None,
+            language=normalize_language(conversation.get("language") if conversation else selected_language),
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="An error occurred while processing your message.")
 
 
-@router.get("/history/{conversation_id}")
-async def get_chat_history(conversation_id: str):
-    """Get chat history for a conversation. Returns 404 if not found."""
-    if not await conversation_exists(conversation_id):
+@router.get("/history/{conversation_id}", response_model=ConversationHistoryResponse)
+async def get_chat_history(
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Get user-scoped chat history for a conversation. Returns 404 if not found."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
         raise HTTPException(status_code=404, detail="Conversation not found")
     messages = await get_conversation_messages(conversation_id)
-    return {"conversation_id": conversation_id, "messages": messages}
+    conversation = await get_conversation(conversation_id, current_user["id"])
+    return ConversationHistoryResponse(
+        conversation_id=conversation_id,
+        title=(conversation.get("title") if conversation else None),
+        language=normalize_language(conversation.get("language") if conversation else "en"),
+        messages=[ChatMessage(**message) for message in messages],
+    )
+
+
+@router.get("/conversations", response_model=list[ConversationListItem])
+async def get_conversations(
+    current_user: dict = Depends(get_current_user),
+    limit: int = 50,
+):
+    """List authenticated user's conversations."""
+    items = await list_conversations(current_user["id"], limit=min(max(limit, 1), 200))
+    return [ConversationListItem(**item) for item in items]

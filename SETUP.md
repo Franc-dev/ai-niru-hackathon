@@ -57,7 +57,7 @@ Quick setup instructions for getting the project running locally.
    ```bash
    cd frontend
    ```
-
+   
 2. **Install dependencies**
    ```bash
    npm install
@@ -76,7 +76,7 @@ Quick setup instructions for getting the project running locally.
    ```bash
    npm run dev
    ```
-
+   
    Frontend will be available at `http://localhost:3000`
 
 ## MongoDB Setup

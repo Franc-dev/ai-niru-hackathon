@@ -1,6 +1,6 @@
-# EM-NS Training Workflow
+# EMNS Training Workflow
 
-This workflow is aligned to the EM-NS roadmap:
+This workflow is aligned to the EMNS roadmap:
 - Chat-only model training (no voice model training).
 - Bilingual English + Swahili data.
 - Safety-centered evaluation before release.
@@ -14,7 +14,7 @@ python -m venv .venv
 pip install -r training/requirements.txt
 ```
 
-## 2) Build Bilingual Dataset (MentalChat16K -> EN+SW)
+## 2) Build Bilingual Dataset (MentalChat16K -> English+Kiswahili)
 
 Full dataset:
 

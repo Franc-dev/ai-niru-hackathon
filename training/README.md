@@ -121,3 +121,5 @@ npm run dev
 ## 7) Recommended Next Dataset Step (Kenyan Localization)
 
 Add a second dataset file with clinician-reviewed Kenyan Swahili/code-switch samples, then merge into the same JSONL format before training.
+
+Used qwen 1.5 instruct. - deploy model using hugging inference 

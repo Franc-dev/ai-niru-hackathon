@@ -1,258 +1,288 @@
-# EM-NS: Full Training & Deployment Pipeline
+# EM-NS: Complete Training & Deployment Guide
 
-End-to-end guide for building, training, and deploying the EM-NS bilingual mental health counselling model.
-
-> **Your setup**: 8GB RAM, CPU only, Windows. This guide uses **free cloud GPUs** for training.
+> **Your setup**: Windows, 8GB RAM, CPU only.
+> **Training**: Kaggle free GPU (P100, 30 hrs/week).
+> **Serving**: Local CPU (slow but works) or free cloud.
 
 ---
 
-## 1. Prerequisites
+## Overview
 
-### Local Machine (dataset building only)
-- Python 3.10+
-- 8 GB RAM (sufficient for dataset building)
-- No GPU needed for Steps 1-2
+```
+Step 1: [LOCAL]   Build the combined EN+SW dataset (CPU, ~5 min)
+Step 2: [KAGGLE]  Upload dataset to Kaggle
+Step 3: [KAGGLE]  Train LoRA adapter on free P100 GPU (~2-3 hrs)
+Step 4: [KAGGLE]  Download trained adapter
+Step 5: [LOCAL]   Serve model on localhost:8001
+Step 6: [LOCAL]   Start backend (localhost:8000) + frontend (localhost:3000)
+```
 
-### Install Dependencies (local)
+---
+
+## Step 1: Build the Combined Bilingual Dataset (Local)
+
+This only downloads and formats data — runs fine on CPU with 8GB RAM.
+
+### 1.1 Install dataset dependencies
 
 ```bash
 pip install datasets tqdm
 ```
 
-### Free Cloud GPU Options (for training)
-
-| Platform | Free GPU | VRAM | Time Limit | Best For |
-|----------|----------|------|------------|----------|
-| **Google Colab** | T4 | 15 GB | ~12 hrs/day | Quick experiments |
-| **Kaggle Notebooks** | P100 / T4x2 | 16 GB | 30 hrs/week | Longer training |
-| **Lightning AI** | T4 | 16 GB | 22 GPU hrs/month | Determined AI |
-| **GitHub Codespaces** | None (CPU) | 8 GB | 60 hrs/month | Dataset building |
-
-**Recommended path**: Build dataset locally → Upload to Google Drive/Kaggle → Train on Colab/Kaggle.
-
-### Project Structure
-
-```
-ai-niru-hackathon/
-├── training/
-│   ├── scripts/
-│   │   ├── build_combined_dataset.py   # Stage 0: combined EN+SW dataset
-│   │   ├── build_mentalchat_bilingual.py  # Legacy: translated bilingual
-│   │   ├── train_lora_chat.py          # Local LoRA training
-│   │   └── run_training_pipeline.py    # Orchestrates all stages
-│   └── determined/
-│       ├── train_det.py                # Determined AI entrypoint
-│       ├── experiment_const.yaml       # Single-run config
-│       └── experiment_adaptive.yaml    # ASHA HP search config
-├── data/training/                      # Generated datasets (gitignored)
-├── backend/                            # FastAPI app
-└── frontend/                           # Next.js frontend
-```
-
----
-
-## 2. Build the Combined Bilingual Dataset (Local - CPU)
-
-This runs on your machine. It only downloads and formats data — no GPU needed.
+### 1.2 Run the builder
 
 ```bash
 python training/scripts/build_combined_dataset.py
 ```
 
-| Source | Language | Rows | Type |
-|--------|----------|------|------|
-| `ShenLab/MentalChat16K` | English | ~16K | Counselling Q&A |
-| `franmwan/swahili-Mental-Health` | Swahili | ~9K | Native Swahili Q&A |
+This pulls two HuggingFace datasets:
 
-### Options
+| Source | Language | Rows |
+|--------|----------|------|
+| `ShenLab/MentalChat16K` | English | ~16K |
+| `franmwan/swahili-Mental-Health` | Swahili (native) | ~9K |
 
-```bash
-python training/scripts/build_combined_dataset.py --max-en-rows 5000 --max-sw-rows 5000
-```
+### 1.3 Verify output
 
-### Output Files
+You should now have these files:
 
 ```
 data/training/
-├── combined_all.jsonl       # All records (EN + SW)
-├── combined_train.jsonl     # 90% stratified split
-├── combined_val.jsonl       # 5% stratified split
-├── combined_test.jsonl      # 5% stratified split
-└── combined_manifest.json   # Build metadata & stats
+├── combined_all.jsonl       # ~25K records
+├── combined_train.jsonl     # 90% (~22.5K)
+├── combined_val.jsonl       # 5% (~1.2K)
+├── combined_test.jsonl      # 5% (~1.2K)
+└── combined_manifest.json   # stats
+```
+
+Check the manifest:
+```bash
+python -c "import json; print(json.dumps(json.load(open('data/training/combined_manifest.json')), indent=2))"
 ```
 
 ---
 
-## 3. Train on Google Colab (Free T4 GPU)
+## Step 2: Upload Dataset to Kaggle
 
-### Step 3.1: Upload dataset to Google Drive
+### 2.1 Create a Kaggle account
 
-1. Go to [drive.google.com](https://drive.google.com)
-2. Create folder: `emns-training`
-3. Upload these files from `data/training/`:
+Go to [kaggle.com](https://www.kaggle.com) and sign up (free).
+
+### 2.2 Upload as a Kaggle Dataset
+
+1. Go to **kaggle.com/datasets** → **New Dataset**
+2. Name it: `emns-combined-bilingual`
+3. Upload these 3 files from your `data/training/` folder:
    - `combined_train.jsonl`
    - `combined_val.jsonl`
    - `combined_test.jsonl`
+4. Click **Create**
 
-### Step 3.2: Open Colab notebook
+### 2.3 Note your dataset path
 
-Go to [colab.research.google.com](https://colab.research.google.com) → New Notebook.
+Your dataset will be at: `kaggle.com/datasets/<your-username>/emns-combined-bilingual`
 
-**Change runtime**: Runtime → Change runtime type → **T4 GPU**
+In notebooks it's available at: `/kaggle/input/emns-combined-bilingual/`
 
-### Step 3.3: Paste this into Colab cells
+---
+
+## Step 3: Train on Kaggle (Free P100 GPU)
+
+### 3.1 Create a new Kaggle Notebook
+
+1. Go to **kaggle.com/code** → **New Notebook**
+2. On the right sidebar:
+   - **Settings** → **Accelerator** → Select **GPU P100**
+   - **Settings** → **Internet** → Toggle **ON**
+3. On the right sidebar → **Add Data** → search your dataset `emns-combined-bilingual` → **Add**
+
+### 3.2 Paste these cells into the notebook
+
+---
 
 **Cell 1: Install dependencies**
+
 ```python
-!pip install -q datasets transformers peft trl bitsandbytes accelerate tqdm torch
+!pip install -q datasets transformers peft trl bitsandbytes accelerate tqdm sentencepiece protobuf
 ```
-
-**Cell 2: Mount Drive & load data**
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-
-TRAIN_FILE = "/content/drive/MyDrive/emns-training/combined_train.jsonl"
-EVAL_FILE = "/content/drive/MyDrive/emns-training/combined_val.jsonl"
-OUTPUT_DIR = "/content/drive/MyDrive/emns-training/emns-lora-v1"
-```
-
-**Cell 3: Clone repo and train**
-```python
-!git clone https://github.com/Franc-dev/ai-niru-hackathon.git /content/emns
-%cd /content/emns
-
-!python training/scripts/train_lora_chat.py \
-  --base-model Qwen/Qwen2.5-3B-Instruct \
-  --train-file {TRAIN_FILE} \
-  --eval-file {EVAL_FILE} \
-  --output-dir {OUTPUT_DIR} \
-  --num-epochs 2 \
-  --batch-size 2 \
-  --grad-accum 8 \
-  --max-seq-length 1024
-```
-
-Training takes ~2-4 hours on a T4. The adapter saves to your Google Drive so it persists.
 
 ---
 
-## 4. Train on Kaggle (Free P100 GPU - 30 hrs/week)
+**Cell 2: Clone the project repo**
 
-Kaggle gives more GPU time than Colab.
-
-### Step 4.1: Create a Kaggle Notebook
-
-1. Go to [kaggle.com/code](https://kaggle.com/code) → New Notebook
-2. Settings → Accelerator → **GPU P100**
-3. Settings → Internet → **On**
-
-### Step 4.2: Upload dataset as Kaggle Dataset
-
-1. Go to [kaggle.com/datasets](https://kaggle.com/datasets) → New Dataset
-2. Name: `emns-combined-bilingual`
-3. Upload `combined_train.jsonl`, `combined_val.jsonl`, `combined_test.jsonl`
-
-### Step 4.3: Add to notebook and train
-
-**Cell 1:**
 ```python
-!pip install -q datasets transformers peft trl bitsandbytes accelerate tqdm
-
 !git clone https://github.com/Franc-dev/ai-niru-hackathon.git /kaggle/working/emns
-%cd /kaggle/working/emns
+import os
+os.chdir("/kaggle/working/emns")
+print("Working directory:", os.getcwd())
 ```
 
-**Cell 2:**
+---
+
+**Cell 3: Verify dataset files exist**
+
 ```python
-# Adjust username to your Kaggle handle
+import os
+
 TRAIN_FILE = "/kaggle/input/emns-combined-bilingual/combined_train.jsonl"
-EVAL_FILE = "/kaggle/input/emns-combined-bilingual/combined_val.jsonl"
-OUTPUT_DIR = "/kaggle/working/emns-lora-v1"
+VAL_FILE = "/kaggle/input/emns-combined-bilingual/combined_val.jsonl"
 
-!python training/scripts/train_lora_chat.py \
-  --base-model Qwen/Qwen2.5-3B-Instruct \
-  --train-file $TRAIN_FILE \
-  --eval-file $EVAL_FILE \
-  --output-dir $OUTPUT_DIR \
-  --num-epochs 2 \
-  --batch-size 2 \
-  --grad-accum 8 \
-  --max-seq-length 1024
+for f in [TRAIN_FILE, VAL_FILE]:
+    if os.path.exists(f):
+        # Count lines
+        with open(f) as fh:
+            count = sum(1 for _ in fh)
+        print(f"OK: {f} ({count} records)")
+    else:
+        print(f"MISSING: {f}")
 ```
 
-**Cell 3: Download adapter when done**
+---
+
+**Cell 4: Train the LoRA adapter**
+
 ```python
-import shutil
-shutil.make_archive("/kaggle/working/emns-lora-v1", 'zip', OUTPUT_DIR)
-# Download from Kaggle's Output tab
+import subprocess, sys
+
+result = subprocess.run([
+    sys.executable, "training/scripts/train_lora_chat.py",
+    "--base-model", "Qwen/Qwen2.5-3B-Instruct",
+    "--train-file", TRAIN_FILE,
+    "--eval-file", VAL_FILE,
+    "--output-dir", "/kaggle/working/emns-lora-v1",
+    "--num-epochs", "2",
+    "--batch-size", "2",
+    "--grad-accum", "8",
+    "--max-seq-length", "1024",
+    "--lora-r", "16",
+    "--lora-alpha", "32",
+    "--lora-dropout", "0.05",
+    "--logging-steps", "10",
+    "--save-steps", "500",
+    "--eval-steps", "500",
+])
+
+print("Exit code:", result.returncode)
+```
+
+This takes **~2-3 hours** on a P100. You'll see training loss printed every 10 steps.
+
+---
+
+**Cell 5: Verify the adapter was saved**
+
+```python
+import os
+
+adapter_dir = "/kaggle/working/emns-lora-v1"
+print("Adapter files:")
+for f in os.listdir(adapter_dir):
+    size_mb = os.path.getsize(os.path.join(adapter_dir, f)) / (1024 * 1024)
+    print(f"  {f} ({size_mb:.1f} MB)")
+```
+
+You should see:
+```
+adapter_config.json
+adapter_model.safetensors
+tokenizer.json
+tokenizer_config.json
+special_tokens_map.json
+tokenizer.model (if applicable)
 ```
 
 ---
 
-## 5. Determined AI on Lightning AI (Free Tier)
+**Cell 6: Quick test — generate a response**
 
-If you want the full Determined AI experience with HP search:
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
-### Step 5.1: Sign up at [lightning.ai](https://lightning.ai) (free)
+base_model_name = "Qwen/Qwen2.5-3B-Instruct"
+adapter_path = "/kaggle/working/emns-lora-v1"
 
-### Step 5.2: Create a Studio with GPU
+tokenizer = AutoTokenizer.from_pretrained(base_model_name, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(
+    base_model_name, trust_remote_code=True, torch_dtype=torch.float16, device_map="auto"
+)
+model = PeftModel.from_pretrained(model, adapter_path)
+model.eval()
 
-1. New Studio → Select **T4 GPU**
-2. Open terminal in the Studio
+# Test English
+messages_en = [
+    {"role": "system", "content": "You are a helpful mental health counselling assistant. Provide safe, supportive, non-judgmental guidance."},
+    {"role": "user", "content": "I've been feeling very anxious and can't sleep at night."},
+]
 
-### Step 5.3: Set up and run
+input_text = tokenizer.apply_chat_template(messages_en, tokenize=False, add_generation_prompt=True)
+inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
 
-```bash
-# Clone and enter project
-git clone https://github.com/Franc-dev/ai-niru-hackathon.git
-cd ai-niru-hackathon
+with torch.inference_mode():
+    outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.7, do_sample=True)
 
-# Install deps
-pip install datasets transformers peft trl bitsandbytes accelerate tqdm determined
+response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+print("=== English Response ===")
+print(response)
 
-# Build dataset
-python training/scripts/build_combined_dataset.py
+# Test Swahili
+messages_sw = [
+    {"role": "system", "content": "Wewe ni msaidizi wa ushauri wa afya ya akili. Toa mwongozo salama, wa kusaidia, na usio na hukumu."},
+    {"role": "user", "content": "Nina wasiwasi sana na siwezi kulala usiku."},
+]
 
-# Start Determined local cluster
-det deploy local cluster-up
+input_text = tokenizer.apply_chat_template(messages_sw, tokenize=False, add_generation_prompt=True)
+inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
 
-# Run sanity check (single trial)
-det -m http://localhost:8080 experiment create \
-    training/determined/experiment_const.yaml .
+with torch.inference_mode():
+    outputs = model.generate(**inputs, max_new_tokens=256, temperature=0.7, do_sample=True)
 
-# Once that passes, run HP search
-det -m http://localhost:8080 experiment create \
-    training/determined/experiment_adaptive.yaml .
+response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+print("\n=== Swahili Response ===")
+print(response)
 ```
-
-### Monitor experiments
-
-```bash
-det -m http://localhost:8080 experiment list
-det -m http://localhost:8080 trial logs <trial_id>
-```
-
-### HP Search Space
-
-| Parameter | Type | Range |
-|-----------|------|-------|
-| `lora_r` | categorical | 8, 16, 32, 64 |
-| `lora_alpha` | categorical | 16, 32, 64 |
-| `lora_dropout` | double | 0.0 - 0.1 |
-| `learning_rate` | log | 1e-5 - 1e-3 |
-| `batch_size` | categorical | 1, 2, 4 |
-| `grad_accum` | categorical | 4, 8, 16 |
-| `language_filter` | categorical | en, sw, all |
 
 ---
 
-## 6. Export the Trained Adapter
+**Cell 7: Zip and prepare for download**
 
-After training completes (on any platform), download the adapter folder. It contains:
+```python
+import shutil, os
 
+adapter_dir = "/kaggle/working/emns-lora-v1"
+shutil.make_archive("/kaggle/working/emns-lora-v1-adapter", "zip", adapter_dir)
+print("Created: /kaggle/working/emns-lora-v1-adapter.zip")
+print(f"Size: {os.path.getsize('/kaggle/working/emns-lora-v1-adapter.zip') / (1024*1024):.1f} MB")
 ```
-emns-lora-v1/
+
+---
+
+## Step 4: Download the Trained Adapter
+
+### Option A: From Kaggle Output tab
+1. After the notebook finishes, click **Save Version** (top right) → **Save & Run All**
+2. Once done, go to the notebook's **Output** tab
+3. Download `emns-lora-v1-adapter.zip`
+
+### Option B: Using Kaggle API (from your local machine)
+
+```bash
+pip install kaggle
+kaggle kernels output <your-username>/<notebook-name> -p ./
+```
+
+### 4.1 Extract the adapter locally
+
+```bash
+mkdir -p training/artifacts/emns-chat-lora-v1
+```
+
+Unzip `emns-lora-v1-adapter.zip` into `training/artifacts/emns-chat-lora-v1/`.
+
+Your folder should look like:
+```
+training/artifacts/emns-chat-lora-v1/
 ├── adapter_config.json
 ├── adapter_model.safetensors
 ├── tokenizer.json
@@ -260,112 +290,96 @@ emns-lora-v1/
 └── special_tokens_map.json
 ```
 
-### Optional: Merge into base model
-
-```python
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-base = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-3B-Instruct")
-model = PeftModel.from_pretrained(base, "training/artifacts/emns-lora-v1")
-merged = model.merge_and_unload()
-merged.save_pretrained("training/artifacts/emns-merged")
-AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct").save_pretrained(
-    "training/artifacts/emns-merged"
-)
-```
-
 ---
 
-## 7. Serve the Model
+## Step 5: Serve the Model Locally
 
-### Option A: HuggingFace Spaces (free, easiest)
+The serving script loads your trained LoRA adapter and runs a FastAPI server on port 8001 — exactly what the backend expects.
 
-1. Go to [huggingface.co/spaces](https://huggingface.co/spaces) → Create Space
-2. Upload your adapter + a Gradio app
-3. Free CPU inference (slow but works)
-
-### Option B: vLLM on cloud (if you have a GPU server)
+### 5.1 Install serving dependencies
 
 ```bash
-pip install vllm
-python -m vllm.entrypoints.openai.api_server \
-    --model training/artifacts/emns-merged \
-    --port 8000
+pip install torch transformers peft fastapi uvicorn
 ```
 
-### Option C: Local inference with LoRA (CPU - slow but works)
+> **Note**: On your 8GB CPU machine, the 3B model will use ~6GB RAM and respond in ~30-60 seconds per message. This is fine for development/demo.
 
-```python
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct")
-model = AutoModelForCausalLM.from_pretrained(
-    "Qwen/Qwen2.5-3B-Instruct", device_map="cpu"
-)
-model = PeftModel.from_pretrained(model, "training/artifacts/emns-lora-v1")
-
-messages = [
-    {"role": "system", "content": "You are a helpful mental health counselling assistant."},
-    {"role": "user", "content": "I've been feeling very anxious lately."},
-]
-inputs = tokenizer.apply_chat_template(messages, return_tensors="pt")
-outputs = model.generate(inputs, max_new_tokens=256)
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))
-```
-
----
-
-## 8. Evaluation
-
-### Run on test split (on Colab/Kaggle)
+### 5.2 Start the model server
 
 ```bash
-python training/scripts/train_lora_chat.py \
-  --eval-only \
-  --eval-file data/training/combined_test.jsonl \
+python training/scripts/serve_model.py \
   --base-model Qwen/Qwen2.5-3B-Instruct \
-  --adapter-path training/artifacts/emns-lora-v1
+  --adapter-path training/artifacts/emns-chat-lora-v1 \
+  --port 8001
 ```
 
-### Key Metrics
-- **eval_loss**: Cross-entropy loss on held-out data
-- **perplexity**: `exp(eval_loss)` — lower is better
-- Compare EN-only vs SW-only vs bilingual to assess cross-lingual transfer
+First run downloads the base model (~6GB). After that it starts instantly.
 
-### Manual Evaluation Checklist
-- [ ] Crisis responses include safety resources and hotline numbers
-- [ ] Swahili responses are fluent and culturally appropriate
-- [ ] Model does not diagnose or prescribe medication
-- [ ] Empathetic tone is maintained across languages
+You should see:
+```
+Loading base model: Qwen/Qwen2.5-3B-Instruct on cpu ...
+Loading LoRA adapter: training/artifacts/emns-chat-lora-v1 ...
+Adapter loaded.
+Model ready.
+INFO:     Uvicorn running on http://0.0.0.0:8001
+```
+
+### 5.3 Test the model server
+
+Open a new terminal and test:
+
+```bash
+curl -X POST http://localhost:8001/v1/chat -H "Content-Type: application/json" -d "{\"messages\": [{\"role\": \"system\", \"content\": \"You are a helpful mental health counselling assistant.\"}, {\"role\": \"user\", \"content\": \"I feel anxious\"}]}"
+```
+
+Or with Python:
+
+```python
+import requests
+
+r = requests.post("http://localhost:8001/v1/chat", json={
+    "messages": [
+        {"role": "system", "content": "You are a helpful mental health counselling assistant."},
+        {"role": "user", "content": "I feel anxious"},
+    ]
+})
+print(r.json())
+# {"content": "I hear you. Anxiety can feel overwhelming..."}
+```
+
+### 5.4 Check health
+
+```bash
+curl http://localhost:8001/health
+# {"status": "ok", "device": "cpu"}
+```
 
 ---
 
-## 9. Connect to the Application
+## Step 6: Connect to Backend & Frontend
 
-### Configure the backend
+### 6.1 Backend configuration
 
-Set environment variables in `backend/.env`:
+Your backend already expects the model at `http://localhost:8001/v1/chat` (set in `backend/core/config.py`). No changes needed.
 
+If you want to customize, create `backend/.env`:
 ```env
-# If using vLLM or OpenAI-compatible endpoint:
-OPENAI_API_BASE=http://localhost:8000/v1
-OPENAI_API_KEY=not-needed
-
-# If using HuggingFace local model:
-MODEL_PATH=training/artifacts/emns-lora-v1
-BASE_MODEL=Qwen/Qwen2.5-3B-Instruct
+LOCAL_MODEL_URL=http://localhost:8001/v1/chat
+LOCAL_EMBEDDING_URL=http://localhost:8001/v1/embeddings
+MONGODB_URL=mongodb://localhost:27017
 ```
 
-### Start the backend
+### 6.2 Start the backend (new terminal)
 
 ```bash
 cd backend
+pip install -r requirements.txt
 python run.py
 ```
 
-### Start the frontend
+Backend runs on `http://localhost:8000`.
+
+### 6.3 Start the frontend (new terminal)
 
 ```bash
 cd frontend
@@ -373,54 +387,146 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`.
+Frontend runs on `http://localhost:3000`.
+
+### 6.4 Architecture
+
+```
+Browser (localhost:3000)
+   │
+   ▼
+Frontend (Next.js)
+   │  POST /api/v1/chat
+   ▼
+Backend (FastAPI, localhost:8000)
+   │  POST /v1/chat {"messages": [...]}
+   ▼
+Model Server (serve_model.py, localhost:8001)
+   │  Qwen2.5-3B + LoRA adapter
+   ▼
+Response → Backend → Frontend → User
+```
+
+### 6.5 Full startup (3 terminals)
+
+**Terminal 1 — Model Server:**
+```bash
+python training/scripts/serve_model.py --adapter-path training/artifacts/emns-chat-lora-v1
+```
+
+**Terminal 2 — Backend:**
+```bash
+cd backend && python run.py
+```
+
+**Terminal 3 — Frontend:**
+```bash
+cd frontend && npm run dev
+```
+
+Open `http://localhost:3000` and start chatting.
 
 ---
 
-## 10. Troubleshooting
+## Troubleshooting
 
-### Dataset build fails with "Dataset not found"
+### Dataset build: "Dataset not found"
 ```bash
 pip install --upgrade datasets huggingface_hub
 ```
 
-### Colab disconnects during training
-- Use Colab Pro ($10/month) for longer sessions
-- Or use Kaggle (30 hrs/week, less disconnection)
-- Save checkpoints to Google Drive so you can resume
+### Kaggle: "No GPU available"
+- Make sure you selected **GPU P100** in notebook settings
+- Kaggle limits to 30 hrs/week — check your quota at kaggle.com/me/account
 
-### Out of memory on T4 (15GB VRAM)
-- Reduce `--batch-size` to 1
-- Increase `--grad-accum` to 16
-- Use `--max-seq-length 512`
-- QLoRA is enabled by default (4-bit quantization)
+### Kaggle: Notebook disconnects mid-training
+- Click **Save Version** before starting to save progress
+- Reduce dataset: rebuild with `--max-en-rows 8000 --max-sw-rows 5000`
+- This reduces training time to ~1.5 hrs
 
-### Import errors in `train_det.py`
-- Ensure `training/__init__.py` and `training/scripts/__init__.py` exist
-- Run from project root: `python -m py_compile training/determined/train_det.py`
+### Kaggle: "CUDA out of memory"
+- Change `--batch-size` to `1` and `--grad-accum` to `16` in Cell 4
+- Use `--max-seq-length 512` instead of 1024
 
-### Determined experiment fails
-- Check master is running: `det -m http://localhost:8080 version`
-- Verify data paths exist: `ls data/training/combined_train.jsonl`
-- Check logs: `det -m http://localhost:8080 trial logs <trial_id>`
+### Local: Model server uses too much RAM
+- The 3B model needs ~6GB RAM. Close other apps.
+- If still tight, use a smaller model: `--base-model Qwen/Qwen2.5-1.5B-Instruct`
+  (Retrain on Kaggle with this smaller model too)
 
-### Lock file prevents dataset build
-```bash
-rm -rf training/reports/build.lock
-```
+### Local: Responses are very slow on CPU
+- Expected: 30-60 seconds per response on CPU. This is normal.
+- Add `--max-new-tokens 128` to limit response length (faster)
+- For production, deploy on a cloud GPU (see below)
 
-### Windows-specific issues
-- Use `python` instead of `python3`
-- bitsandbytes on Windows: `pip install bitsandbytes-windows`
-- Dataset building works fine on Windows/CPU
+### Backend: "Connection refused" to model server
+- Make sure `serve_model.py` is running on port 8001
+- Check: `curl http://localhost:8001/health`
+
+### Import error: "No module named training"
+- Make sure `training/__init__.py` and `training/scripts/__init__.py` exist
+- Run from project root directory
 
 ---
 
-## Quick Reference: Recommended Path
+## Optional: Faster Serving with Free Cloud GPU
 
+If CPU is too slow, you can serve the model on a free cloud GPU:
+
+### Option A: Google Colab as a server (free T4)
+
+**Colab notebook:**
+```python
+# Cell 1: Install
+!pip install -q torch transformers peft fastapi uvicorn pyngrok
+
+# Cell 2: Clone & setup
+!git clone https://github.com/Franc-dev/ai-niru-hackathon.git /content/emns
+# Upload your adapter zip and unzip it:
+# !unzip /content/emns-lora-v1-adapter.zip -d /content/emns-lora-v1
+
+# Cell 3: Expose with ngrok
+from pyngrok import ngrok
+import threading, os, sys
+
+os.chdir("/content/emns")
+sys.path.insert(0, "/content/emns")
+
+# Start tunnel
+public_url = ngrok.connect(8001)
+print(f"Public URL: {public_url}")
+print(f"Set LOCAL_MODEL_URL={public_url}/v1/chat in your backend/.env")
+
+# Cell 4: Run server
+!python training/scripts/serve_model.py \
+  --base-model Qwen/Qwen2.5-3B-Instruct \
+  --adapter-path /content/emns-lora-v1 \
+  --port 8001
 ```
-1. [LOCAL]  python training/scripts/build_combined_dataset.py
-2. [LOCAL]  Upload combined_*.jsonl to Google Drive
-3. [COLAB]  Train with T4 GPU (free) → saves adapter to Drive
-4. [LOCAL]  Download adapter → connect to backend
+
+Then on your local machine, set in `backend/.env`:
+```env
+LOCAL_MODEL_URL=https://<ngrok-url>/v1/chat
 ```
+
+### Option B: HuggingFace Spaces (free, persistent)
+
+1. Go to [huggingface.co/spaces](https://huggingface.co/spaces) → Create Space
+2. Select **Gradio** or **Docker** SDK
+3. Upload your adapter files
+4. Add inference code
+5. Your model gets a permanent URL
+
+---
+
+## File Reference
+
+| File | Purpose |
+|------|---------|
+| `training/scripts/build_combined_dataset.py` | Build EN+SW dataset from HuggingFace |
+| `training/scripts/train_lora_chat.py` | LoRA training script (runs on Kaggle) |
+| `training/scripts/serve_model.py` | Serve trained model as HTTP API |
+| `training/determined/train_det.py` | Determined AI training entrypoint |
+| `training/determined/experiment_const.yaml` | Single-run experiment config |
+| `training/determined/experiment_adaptive.yaml` | HP search config (20 trials) |
+| `backend/services/agent.py` | ReAct agent that calls model server |
+| `backend/core/config.py` | Backend config (LOCAL_MODEL_URL) |

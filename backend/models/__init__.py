@@ -6,6 +6,7 @@ from backend.models.conversation import (
     Message,
     MessageCreate,
 )
+from backend.models.user import User, UserCreate
 
 __all__ = [
     "BaseDocument",
@@ -13,4 +14,6 @@ __all__ = [
     "ConversationCreate",
     "Message",
     "MessageCreate",
+    "User",
+    "UserCreate",
 ]

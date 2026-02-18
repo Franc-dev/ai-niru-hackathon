@@ -4,6 +4,11 @@
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const AUTH_TOKEN_KEY = 'ai_niru_access_token'
+
+export const getStoredToken = () => localStorage.getItem(AUTH_TOKEN_KEY)
+export const setStoredToken = (token: string) => localStorage.setItem(AUTH_TOKEN_KEY, token)
+export const clearStoredToken = () => localStorage.removeItem(AUTH_TOKEN_KEY)
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -15,11 +20,10 @@ export const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Add auth token if available
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    const token = getStoredToken()
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => {
@@ -31,7 +35,9 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle errors globally
+    if (error?.response?.status === 401) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+    }
     return Promise.reject(error)
   }
 )

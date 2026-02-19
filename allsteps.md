@@ -450,7 +450,7 @@ pip install --upgrade datasets huggingface_hub
 
 ### Local: Model server uses too much RAM
 - The 3B model needs ~6GB RAM. Close other apps.
-- If still tight, use a smaller model: `--base-model Qwen/Qwen2.5-1.5B-Instruct`
+- If still tight, use a smaller model: `--base-model Qwen/Qwen2.5-3B-Instruct`
   (Retrain on Kaggle with this smaller model too)
 
 ### Local: Responses are very slow on CPU

@@ -1,6 +1,8 @@
 """
 Agent Service: ReAct loop with RAG (search_knowledge) tool.
-Uses our local model (trained on synthetic data). Returns final response as str.
+Uses our local model (trained on EM-NS mental health data). Returns final response as str.
+
+System prompt: guardrails, language separation (EN/SW), crisis handling, off-topic redirection.
 """
 import re
 from typing import Any
@@ -8,22 +10,10 @@ from typing import Any
 import httpx
 
 from backend.core.config import settings
+from backend.services.agent_prompts import build_system_prompt
 from backend.services.rag import retrieve
 
 MAX_REACT_STEPS = 5
-
-SYSTEM_PROMPT = """You are a helpful assistant with access to a knowledge base. When you need to look up information, use the tool search_knowledge.
-
-Format your response as follows:
-- To search: write exactly "Action: search_knowledge(\"your search query here\")" on its own line.
-- To answer the user: write "Final Answer: " followed by your reply.
-
-You may use search_knowledge zero or more times, then provide a Final Answer. Base your answer on the observations from search when relevant. If the knowledge base has no relevant information, say so and answer from general knowledge."""
-
-LANGUAGE_PROMPTS = {
-    "en": "When you provide Final Answer, write in English.",
-    "sw": "When you provide Final Answer, write in Swahili.",
-}
 
 
 def _parse_action_or_final(text: str) -> tuple[str | None, str | None]:
@@ -44,8 +34,12 @@ async def _chat_completion(messages: list[dict[str, str]]) -> str:
     """Call our local model. POST to LOCAL_MODEL_URL with {"messages": [...]}. Expects {"content": "..."} or {"choices": [{"message": {"content": "..."}}]}."""
     if not settings.LOCAL_MODEL_URL:
         return ""
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        r = await client.post(settings.LOCAL_MODEL_URL, json={"messages": messages})
+    async with httpx.AsyncClient(timeout=600.0) as client:
+        r = await client.post(
+            settings.LOCAL_MODEL_URL,
+            json={"messages": messages},
+            headers={"bypass-tunnel-reminder": "true"}
+        )
         r.raise_for_status()
         data = r.json()
     if "content" in data:
@@ -76,11 +70,10 @@ class AgentService:
         Run ReAct loop. history is list of { role, content }.
         Returns final assistant response string.
         """
+        lang = "sw" if language and str(language).lower().startswith("sw") else "en"
+        system_content = build_system_prompt(language=lang, include_rag=True)
         messages: list[dict[str, str]] = [
-            {
-                "role": "system",
-                "content": f"{SYSTEM_PROMPT}\n\n{LANGUAGE_PROMPTS.get(language, LANGUAGE_PROMPTS['en'])}",
-            },
+            {"role": "system", "content": system_content},
         ]
         for h in history:
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
@@ -100,9 +93,13 @@ class AgentService:
                 messages.append({"role": "user", "content": f"Observation:\n{observation}\n\nContinue with another Thought/Action or provide your Final Answer."})
                 continue
             if value is not None and action_type is None:
+                # Model used "Final Answer:" prefix — return the value
                 return value or "I don't have a final answer for that."
-            messages.append({"role": "assistant", "content": content})
-            messages.append({"role": "user", "content": "Please provide either Action: search_knowledge(\"query\") or Final Answer: your response."})
+            # Model gave a plain response without ReAct format.
+            # Small models (e.g. 1.5B) often don't follow ReAct prompting
+            # reliably, so treat any non-empty response as the final answer.
+            if content:
+                return content
 
         return "I couldn't complete a full answer. Please try asking again or rephrase your question."
 

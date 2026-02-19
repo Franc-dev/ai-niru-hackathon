@@ -200,7 +200,11 @@ async def embeddings(request: EmbeddingRequest):
 
 def main():
     parser = argparse.ArgumentParser(description="Serve EM-NS model")
-    parser.add_argument("--base-model", default="Qwen/Qwen2.5-1.5B-Instruct")
+    parser.add_argument(
+        "--base-model",
+        default="Qwen/Qwen2.5-1.5B-Instruct",
+        help="Must match the model used to train the LoRA adapter (1.5B for emns-chat-lora-v1).",
+    )
     parser.add_argument(
         "--adapter-path",
         default="training/artifacts/emns-chat-lora-v1",

@@ -35,9 +35,11 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 
+# Aligned with backend/services/agent_prompts.py for training-inference consistency
 DEFAULT_SYSTEM_PROMPT = (
-    "You are a helpful mental health counselling assistant. "
-    "Provide safe, supportive, non-judgmental guidance."
+    "You are a mental health and emotional support assistant. "
+    "Provide safe, supportive, non-judgmental guidance. "
+    "Stay within emotional well-being and mental health topics."
 )
 
 CRISIS_PATTERNS = (

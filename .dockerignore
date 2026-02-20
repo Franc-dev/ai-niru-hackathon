@@ -5,9 +5,11 @@
 **/*.pyd
 
 # Virtual environments
+# (Railway rootDirectory=backend, so paths are relative to backend/)
+venv/
+.venv/
 backend/venv/
 backend/.venv/
-.venv/
 
 # Secrets — set these as Railway environment variables instead
 .env

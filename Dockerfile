@@ -12,16 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # ── Dependencies (cached layer) ───────────────────────────────────────────────
-COPY backend/requirements.txt ./requirements.txt
+# Railway sets rootDirectory=backend, so the build context is backend/.
+# All COPY paths are relative to backend/.
+COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ── Application code ──────────────────────────────────────────────────────────
-COPY backend/ ./backend/
+# Copy the entire backend/ context into /app/backend/ so that
+# `from backend.xxx import ...` resolves correctly from WORKDIR /app.
+COPY . ./backend/
 
 # ── Runtime config ────────────────────────────────────────────────────────────
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    # chromadb persists inside the copied backend dir
     CHROMA_PERSIST_DIR=/app/backend/chroma_data \
     PORT=8000
 

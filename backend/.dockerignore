@@ -1,0 +1,25 @@
+# This file must live in backend/ because that is the Docker build context.
+# (Railway sets rootDirectory=backend, so Docker reads .dockerignore from here)
+
+# Virtual environment — huge, never needed in the image
+venv/
+.venv/
+
+# Python bytecode
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets — injected via Railway environment variables
+.env
+.env.*
+
+# Dev/setup scripts not needed at runtime
+setup_elevenlabs.py
+run.py
+scripts/
+
+# Tests
+tests/

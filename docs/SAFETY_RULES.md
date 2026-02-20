@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the safety rules and escalation procedures for the AI Niru Hackathon application.
+This document defines the safety rules and escalation procedures for the Elevana Hackathon application.
 
 ## Safety Rules
 

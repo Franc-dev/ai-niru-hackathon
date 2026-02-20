@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AI Niru Hackathon"
+    PROJECT_NAME: str = "Elevana Hackathon"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     
@@ -34,6 +34,17 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
     ]
     
+    # ElevenLabs Voice
+    ELEVENLABS_API_KEY: str = ""
+    ELEVENLABS_VOICE_ID_EN: str = "pNInz6obpgDQGcFmaJgB"
+    ELEVENLABS_VOICE_ID_SW: str = "EXAVITQu4vr4xnSDxMaL"
+    ELEVENLABS_TTS_MODEL: str = "eleven_multilingual_v2"
+    ELEVENLABS_STT_MODEL: str = "scribe_v1"
+
+    # ElevenLabs Conversational AI agent IDs (create at elevenlabs.io/app/conversational-ai)
+    ELEVENLABS_AGENT_ID_EN: str = ""
+    ELEVENLABS_AGENT_ID_SW: str = ""
+
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

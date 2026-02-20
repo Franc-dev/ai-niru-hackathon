@@ -1,7 +1,7 @@
 /**
  * TanStack Query hooks for API calls
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from './client'
 
 export type LanguageCode = 'en' | 'sw'
@@ -10,6 +10,7 @@ export interface ChatMessage {
   role: string
   content: string
   timestamp?: string
+  message_id?: string
 }
 
 export interface ChatRequest {
@@ -41,6 +42,8 @@ export interface ConversationListItem {
   created_at?: string
   updated_at?: string
   preview: string
+  pinned?: boolean
+  archived?: boolean
 }
 
 export interface AuthUser {
@@ -135,6 +138,7 @@ export const useConversationListQuery = (enabled: boolean) => {
       return response.data
     },
     enabled,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -146,5 +150,112 @@ export const useChatHistory = (conversationId: string, enabled: boolean) => {
       return response.data
     },
     enabled: enabled && !!conversationId,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export const useDeleteConversationMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      const response = await apiClient.delete(`/chat/conversations/${conversationId}`)
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+}
+
+export const useEditConversationTitleMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, title }: { conversationId: string; title: string }) => {
+      const response = await apiClient.patch(`/chat/conversations/${conversationId}`, { title })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+}
+
+export const usePinConversationMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, pinned }: { conversationId: string; pinned: boolean }) => {
+      const response = await apiClient.patch(`/chat/conversations/${conversationId}/pin`, { pinned })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+}
+
+export const useArchiveConversationMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, archived }: { conversationId: string; archived: boolean }) => {
+      const response = await apiClient.patch(`/chat/conversations/${conversationId}/archive`, { archived })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+    },
+  })
+}
+
+export const useDeleteMessageMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, messageId }: { conversationId: string; messageId: string }) => {
+      const response = await apiClient.delete(`/chat/conversations/${conversationId}/messages/${messageId}`)
+      return response.data
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'history', variables.conversationId] })
+    },
+  })
+}
+
+export const useEditMessageMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ conversationId, messageId, content }: { conversationId: string; messageId: string; content: string }) => {
+      const response = await apiClient.patch(`/chat/conversations/${conversationId}/messages/${messageId}`, { content })
+      return response.data
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'history', variables.conversationId] })
+    },
+  })
+}
+
+export interface STTResponse {
+  transcript: string
+  language: string
+}
+
+export const useSTTMutation = () => {
+  return useMutation({
+    mutationFn: async ({ audioBlob, language }: { audioBlob: Blob; language: LanguageCode }) => {
+      const formData = new FormData()
+      formData.append('file', audioBlob, 'audio.webm')
+      formData.append('language', language)
+      const response = await apiClient.post<STTResponse>('/voice/stt', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data
+    },
+  })
+}
+
+export const useTTSMutation = () => {
+  return useMutation({
+    mutationFn: async ({ text, language }: { text: string; language: LanguageCode }) => {
+      const response = await apiClient.post<Blob>('/voice/tts', { text, language }, { responseType: 'blob' })
+      return response.data
+    },
   })
 }

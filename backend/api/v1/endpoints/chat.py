@@ -1,22 +1,31 @@
 """
 Chat Endpoints
 """
+import logging
 from datetime import datetime, timezone
 from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 
 from backend.api.deps import get_current_user
 from backend.repositories.conversation_repo import (
     add_message,
+    archive_conversation,
     conversation_exists,
+    delete_conversation,
+    delete_message,
     get_conversation,
     get_conversation_messages,
     get_or_create_conversation,
     list_conversations,
+    pin_conversation,
     set_conversation_title_if_empty,
     update_conversation_language,
+    update_conversation_title,
+    update_message_content,
 )
 from backend.repositories.user_repo import update_user_preferred_language
 from backend.services.agent import agent_service
@@ -52,6 +61,7 @@ class ChatMessage(BaseModel):
     role: str
     content: str
     timestamp: Optional[str] = None
+    message_id: Optional[str] = None
 
 
 class ChatRequest(BaseModel):
@@ -83,6 +93,8 @@ class ConversationListItem(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     preview: str = ""
+    pinned: bool = False
+    archived: bool = False
 
 
 @router.post("/", response_model=ChatResponse)
@@ -159,7 +171,8 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
         )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        logger.exception("Chat error: %s", e)
         raise HTTPException(status_code=500, detail="An error occurred while processing your message.")
 
 
@@ -185,7 +198,105 @@ async def get_chat_history(
 async def get_conversations(
     current_user: dict = Depends(get_current_user),
     limit: int = 50,
+    include_archived: bool = False,
 ):
     """List authenticated user's conversations."""
-    items = await list_conversations(current_user["id"], limit=min(max(limit, 1), 200))
+    items = await list_conversations(
+        current_user["id"], limit=min(max(limit, 1), 200), include_archived=include_archived
+    )
     return [ConversationListItem(**item) for item in items]
+
+
+class UpdateTitleRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+
+
+class PinRequest(BaseModel):
+    pinned: bool
+
+
+class ArchiveRequest(BaseModel):
+    archived: bool
+
+
+class UpdateMessageRequest(BaseModel):
+    content: str = Field(..., min_length=1)
+
+
+@router.delete("/conversations/{conversation_id}")
+async def delete_conversation_endpoint(
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a conversation and all its messages."""
+    if not await delete_conversation(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"ok": True}
+
+
+@router.patch("/conversations/{conversation_id}")
+async def edit_conversation_title(
+    conversation_id: str,
+    body: UpdateTitleRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Edit conversation title."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    await update_conversation_title(conversation_id, current_user["id"], body.title)
+    return {"ok": True}
+
+
+@router.patch("/conversations/{conversation_id}/pin")
+async def pin_conversation_endpoint(
+    conversation_id: str,
+    body: PinRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Toggle pin on a conversation."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    await pin_conversation(conversation_id, current_user["id"], body.pinned)
+    return {"ok": True}
+
+
+@router.patch("/conversations/{conversation_id}/archive")
+async def archive_conversation_endpoint(
+    conversation_id: str,
+    body: ArchiveRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Toggle archive on a conversation."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    await archive_conversation(conversation_id, current_user["id"], body.archived)
+    return {"ok": True}
+
+
+@router.delete("/conversations/{conversation_id}/messages/{message_id}")
+async def delete_message_endpoint(
+    conversation_id: str,
+    message_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a single message."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if not await delete_message(message_id, conversation_id):
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"ok": True}
+
+
+@router.patch("/conversations/{conversation_id}/messages/{message_id}")
+async def edit_message_endpoint(
+    conversation_id: str,
+    message_id: str,
+    body: UpdateMessageRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Edit a message's content."""
+    if not await conversation_exists(conversation_id, current_user["id"]):
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if not await update_message_content(message_id, conversation_id, body.content):
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"ok": True}

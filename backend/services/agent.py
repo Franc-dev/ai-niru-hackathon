@@ -11,6 +11,7 @@ import httpx
 
 from backend.core.config import settings
 from backend.services.agent_prompts import build_system_prompt
+from backend.services.guardrails import check_guardrail
 from backend.services.rag import retrieve
 
 MAX_REACT_STEPS = 5
@@ -34,14 +35,17 @@ async def _chat_completion(messages: list[dict[str, str]]) -> str:
     """Call our local model. POST to LOCAL_MODEL_URL with {"messages": [...]}. Expects {"content": "..."} or {"choices": [{"message": {"content": "..."}}]}."""
     if not settings.LOCAL_MODEL_URL:
         return ""
-    async with httpx.AsyncClient(timeout=600.0) as client:
-        r = await client.post(
-            settings.LOCAL_MODEL_URL,
-            json={"messages": messages},
-            headers={"bypass-tunnel-reminder": "true"}
-        )
-        r.raise_for_status()
-        data = r.json()
+    try:
+        async with httpx.AsyncClient(timeout=600.0) as client:
+            r = await client.post(
+                settings.LOCAL_MODEL_URL,
+                json={"messages": messages},
+                headers={"bypass-tunnel-reminder": "true"},
+            )
+            r.raise_for_status()
+            data = r.json()
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError):
+        raise
     if "content" in data:
         return (data["content"] or "").strip()
     if "choices" in data and data["choices"]:
@@ -71,6 +75,12 @@ class AgentService:
         Returns final assistant response string.
         """
         lang = "sw" if language and str(language).lower().startswith("sw") else "en"
+
+        # Guardrail: intercept off-topic requests (coding, math, etc.) before calling model
+        should_redirect, redirect_msg = check_guardrail(message, lang)
+        if should_redirect and redirect_msg:
+            return redirect_msg
+
         system_content = build_system_prompt(language=lang, include_rag=True)
         messages: list[dict[str, str]] = [
             {"role": "system", "content": system_content},
@@ -81,7 +91,14 @@ class AgentService:
         step = 0
         while step < MAX_REACT_STEPS:
             step += 1
-            content = await _chat_completion(messages)
+            try:
+                content = await _chat_completion(messages)
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError):
+                return (
+                    "Elevana is temporarily unavailable. Please check that the model server is running and try again."
+                    if lang == "en"
+                    else "Elevana haupatikani kwa sasa. Tafadhali angalia kuwa seva ya modeli inaendesha na jaribu tena."
+                )
             if not content:
                 break
 

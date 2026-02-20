@@ -1,6 +1,6 @@
 # Tasks
 
-This directory contains task tracking and documentation for the AI Niru Hackathon project.
+This directory contains task tracking and documentation for the Elevana Hackathon project.
 
 ## Current Task
 

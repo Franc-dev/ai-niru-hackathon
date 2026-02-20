@@ -2,7 +2,7 @@
 
 ## Overview
 
-AI Niru Hackathon - A full-stack application with FastAPI backend and React TypeScript frontend.
+Elevana Hackathon - A full-stack application with FastAPI backend and React TypeScript frontend.
 
 ## Tech Stack
 

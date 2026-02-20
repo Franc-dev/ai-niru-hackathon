@@ -19,10 +19,9 @@ COPY . ./backend/
 # ── Runtime env ───────────────────────────────────────────────────────────────
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    CHROMA_PERSIST_DIR=/app/backend/chroma_data \
-    PORT=8000
+    CHROMA_PERSIST_DIR=/app/backend/chroma_data
 
-EXPOSE 8000
+EXPOSE 8000 8080
 
 # uvicorn is already in requirements.txt; $PORT is injected by Railway
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -8,7 +8,10 @@ from backend.core.config import settings
 
 
 def _chroma_upsert(ids: list[str], embeddings: list[list[float]], metadatas: list[dict], documents: list[str]) -> None:
-    import chromadb
+    try:
+        import chromadb
+    except ImportError:
+        return
     client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
     collection = client.get_or_create_collection(
         name=settings.RAG_COLLECTION_NAME,
@@ -18,7 +21,10 @@ def _chroma_upsert(ids: list[str], embeddings: list[list[float]], metadatas: lis
 
 
 def _chroma_search(query_embedding: list[float], top_k: int) -> list[dict]:
-    import chromadb
+    try:
+        import chromadb
+    except ImportError:
+        return []
     client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
     collection = client.get_or_create_collection(
         name=settings.RAG_COLLECTION_NAME,
@@ -43,9 +49,12 @@ class VectorDBService:
     async def initialize(self):
         """Initialize vector database connection."""
         if self.db_type == "chroma":
-            await asyncio.to_thread(
-                lambda: __import__("chromadb").PersistentClient(path=settings.CHROMA_PERSIST_DIR)
-            )
+            try:
+                await asyncio.to_thread(
+                    lambda: __import__("chromadb").PersistentClient(path=settings.CHROMA_PERSIST_DIR)
+                )
+            except ImportError:
+                self.db_type = "placeholder"
         self.initialized = True
 
     async def upsert_vectors(

@@ -7,8 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.core.database import connect_to_mongo, close_mongo_connection
 from backend.api.v1.router import api_router
-from backend.services.agent import agent_service
-from backend.services.vector_db import vector_db
 from backend.repositories.conversation_repo import ensure_conversation_indexes
 from backend.repositories.user_repo import ensure_user_indexes
 
@@ -19,8 +17,6 @@ async def lifespan(app: FastAPI):
     await connect_to_mongo()
     await ensure_user_indexes()
     await ensure_conversation_indexes()
-    await vector_db.initialize()
-    await agent_service.initialize()
     yield
     await close_mongo_connection()
 

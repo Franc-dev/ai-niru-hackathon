@@ -31,6 +31,8 @@ def _serialize_conversation(doc: dict[str, Any]) -> dict[str, Any]:
         "language": _normalize_language(doc.get("language")),
         "created_at": _serialize_datetime(doc.get("created_at")),
         "updated_at": _serialize_datetime(doc.get("updated_at")),
+        "pinned": doc.get("pinned", False),
+        "archived": doc.get("archived", False),
     }
 
 
@@ -115,6 +117,7 @@ async def get_conversation_messages(conversation_id: str) -> list[dict]:
     messages = []
     async for doc in cursor:
         messages.append({
+            "message_id": str(doc["_id"]),
             "role": doc["role"],
             "content": doc["content"],
             "timestamp": doc.get("timestamp").isoformat() if doc.get("timestamp") else None,
@@ -147,13 +150,19 @@ async def get_conversation(conversation_id: str, user_id: str) -> dict[str, Any]
     return _serialize_conversation(doc)
 
 
-async def list_conversations(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
-    """List user conversations with latest preview text."""
+async def list_conversations(
+    user_id: str, limit: int = 50, include_archived: bool = False
+) -> list[dict[str, Any]]:
+    """List user conversations with latest preview text. Pinned first, then by updated_at."""
     database = get_database()
+    query: dict[str, Any] = {"user_id": user_id}
+    if not include_archived:
+        query["$or"] = [{"archived": {"$ne": True}}, {"archived": {"$exists": False}}]
+
     cursor = (
         database[CONVERSATIONS_COLLECTION]
-        .find({"user_id": user_id})
-        .sort("updated_at", -1)
+        .find(query)
+        .sort([("pinned", -1), ("updated_at", -1)])
         .limit(limit)
     )
 
@@ -214,6 +223,93 @@ async def set_conversation_title_if_empty(conversation_id: str, user_id: str, ti
                     "updated_at": datetime.utcnow(),
                 }
             },
+        )
+        return result.modified_count > 0
+    except Exception:
+        return False
+
+
+async def delete_conversation(conversation_id: str, user_id: str) -> bool:
+    """Delete a conversation and all its messages."""
+    database = get_database()
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].delete_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id}
+        )
+        if result.deleted_count > 0:
+            await database[MESSAGES_COLLECTION].delete_many(
+                {"conversation_id": conversation_id}
+            )
+            return True
+        return False
+    except Exception:
+        return False
+
+
+async def update_conversation_title(conversation_id: str, user_id: str, title: str) -> bool:
+    """Manually update conversation title."""
+    database = get_database()
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].update_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id},
+            {
+                "$set": {
+                    "title": title,
+                    "title_auto_generated": False,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+        return result.modified_count > 0
+    except Exception:
+        return False
+
+
+async def pin_conversation(conversation_id: str, user_id: str, pinned: bool) -> bool:
+    """Toggle pin status on a conversation."""
+    database = get_database()
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].update_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id},
+            {"$set": {"pinned": pinned, "updated_at": datetime.utcnow()}},
+        )
+        return result.modified_count > 0
+    except Exception:
+        return False
+
+
+async def archive_conversation(conversation_id: str, user_id: str, archived: bool) -> bool:
+    """Toggle archive status on a conversation."""
+    database = get_database()
+    try:
+        result = await database[CONVERSATIONS_COLLECTION].update_one(
+            {"_id": ObjectId(conversation_id), "user_id": user_id},
+            {"$set": {"archived": archived, "updated_at": datetime.utcnow()}},
+        )
+        return result.modified_count > 0
+    except Exception:
+        return False
+
+
+async def delete_message(message_id: str, conversation_id: str) -> bool:
+    """Delete a single message."""
+    database = get_database()
+    try:
+        result = await database[MESSAGES_COLLECTION].delete_one(
+            {"_id": ObjectId(message_id), "conversation_id": conversation_id}
+        )
+        return result.deleted_count > 0
+    except Exception:
+        return False
+
+
+async def update_message_content(message_id: str, conversation_id: str, content: str) -> bool:
+    """Edit message content."""
+    database = get_database()
+    try:
+        result = await database[MESSAGES_COLLECTION].update_one(
+            {"_id": ObjectId(message_id), "conversation_id": conversation_id},
+            {"$set": {"content": content}},
         )
         return result.modified_count > 0
     except Exception:

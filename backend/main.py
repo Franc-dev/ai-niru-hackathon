@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="AI Niru Hackathon API",
+    description="Elevana Hackathon API",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
@@ -48,7 +48,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
-    return {"message": "AI Niru Hackathon API", "version": settings.VERSION}
+    return {"message": "Elevana Hackathon API", "version": settings.VERSION}
 
 
 @app.get("/health")

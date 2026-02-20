@@ -1,4 +1,4 @@
-# AI Niru Hackathon
+# Elevana Hackathon
 Full-stack application with FastAPI backend and React TypeScript frontend.
 
 ## Tech Stack

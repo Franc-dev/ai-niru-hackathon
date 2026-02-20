@@ -110,7 +110,7 @@ Quick setup instructions for getting the project running locally.
 
 3. **Frontend**
    - Open `http://localhost:3000` in browser
-   - Should see "AI Niru Hackathon" page
+   - Should see "Elevana Hackathon" page
 
 ## Troubleshooting
 

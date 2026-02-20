@@ -25,6 +25,8 @@ class Conversation(BaseModel):
     title: Optional[str] = None
     title_auto_generated: bool = False
     language: LanguageCode = "en"
+    pinned: bool = False
+    archived: bool = False
     metadata: Optional[dict[str, Any]] = None
 
     class Config:

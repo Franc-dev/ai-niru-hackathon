@@ -1,6 +1,6 @@
-AI Niru Hackathon - Knowledge Base Sample
+Elevana Hackathon - Knowledge Base Sample
 
-This is a sample document for the RAG pipeline. The AI Niru project is a full-stack application with a FastAPI backend and React TypeScript frontend. It uses MongoDB for conversation storage and a vector database for semantic search.
+This is a sample document for the RAG pipeline. The Elevana project is a full-stack application with a FastAPI backend and React TypeScript frontend. It uses MongoDB for conversation storage and a vector database for semantic search.
 
 The agent uses a ReAct-style loop: Thought, Action, and Observation. When the user asks a question that can be answered from the knowledge base, the agent can use the search_knowledge tool to retrieve relevant chunks. Responses are then grounded in the retrieved content.
 

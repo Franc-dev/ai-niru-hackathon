@@ -2,9 +2,9 @@
 
 ## Checklist
 
-1. **Root directory**: Set to **empty** (/) — required for Railpack so `backend` package is found
+1. **Root directory**: Set to **empty** (/) in Railway → Settings → Source — required so `backend` package is found
 
-2. **Builder**: Uses **Railpack** (not Docker) — see `railway.toml`. If Railway still picks Docker, rename `Dockerfile` and `backend/Dockerfile` to `Dockerfile.bak` temporarily
+2. **Builder**: **Railpack only** — Dockerfiles renamed to `.bak` so Railway uses Railpack (no Docker)
 
 2. **Environment variables** (required): Set in Railway → Service → Variables:
    - `MONGODB_URL` — your MongoDB connection string

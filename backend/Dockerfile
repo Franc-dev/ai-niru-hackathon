@@ -19,4 +19,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . ./backend/
 
 EXPOSE 8000
-CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Read PORT from env at runtime (Railway injects it)
+CMD ["python", "-c", "import os; import uvicorn; from backend.main import app; uvicorn.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))"]

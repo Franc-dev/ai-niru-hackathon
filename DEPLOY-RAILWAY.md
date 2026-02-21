@@ -6,6 +6,8 @@
 
 2. **Builder**: **Railpack only** — Dockerfiles renamed to `.bak` so Railway uses Railpack (no Docker)
 
+3. **Python 3.11**: `.python-version` pins to 3.11 (3.13 breaks pydantic). If build still fails, add `RAILPACK_PYTHON_VERSION=3.11` in Railway Variables.
+
 2. **Environment variables** (required): Set in Railway → Service → Variables:
    - `MONGODB_URL` — your MongoDB connection string
    - `MONGODB_DB_NAME` — e.g. `ai_niru`.

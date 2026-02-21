@@ -1,6 +1,7 @@
 [build]
 builder = "RAILPACK"
 # Root Directory must be empty (/) so backend package is found
+# Python 3.11 via runtime.txt (3.13 breaks pydantic-core)
 
 [deploy]
 startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"

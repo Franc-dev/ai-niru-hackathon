@@ -14,7 +14,7 @@
    - `JWT_SECRET_KEY` — your secret
    - `LOCAL_MODEL_URL` — your model API URL (e.g. Lightning/localtunnel)
    - `LOCAL_EMBEDDING_URL` — same as model if using combined endpoint
-   - `BACKEND_CORS_ORIGINS` — e.g. `["https://your-frontend.vercel.app"]`
+   - `BACKEND_CORS_ORIGINS` — e.g. `http://localhost:3000,http://localhost:5173,https://ai-niru-hackathon.vercel.app` (or omit to use defaults)
    - **MONGODB_URL is required** — without it the app will crash on startup
 
 3. **Build**: Railway auto-detects the Dockerfile. Push to trigger deploy.

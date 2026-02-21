@@ -8,7 +8,7 @@
 
 2. **Environment variables** (required): Set in Railway → Service → Variables:
    - `MONGODB_URL` — your MongoDB connection string
-   - `MONGODB_DB_NAME` — e.g. `ai_niru`
+   - `MONGODB_DB_NAME` — e.g. `ai_niru`.
    - `JWT_SECRET_KEY` — your secret
    - `LOCAL_MODEL_URL` — your model API URL (e.g. Lightning/localtunnel)
    - `LOCAL_EMBEDDING_URL` — same as model if using combined endpoint

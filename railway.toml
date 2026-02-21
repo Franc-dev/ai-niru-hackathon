@@ -1,8 +1,10 @@
 [build]
 dockerfilePath = "Dockerfile"
+# When Root Directory = backend, Railway uses backend/Dockerfile
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
+startupTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

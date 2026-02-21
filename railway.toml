@@ -1,8 +1,9 @@
 [build]
-dockerfilePath = "Dockerfile"
-# When Root Directory = backend, Railway uses backend/Dockerfile
+builder = "RAILPACK"
+# Root Directory must be empty (/) so backend package is found
 
 [deploy]
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 startupTimeout = 120

@@ -6,7 +6,8 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env          # load all secrets from local .env
+      - ./backend/.env          
+      # load all secrets from local .env
     environment:
       # Overrides that differ from .env for containerised run
       - VECTOR_DB_TYPE=placeholder   # skip chromadb; not needed for voice

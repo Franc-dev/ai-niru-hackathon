@@ -27,7 +27,7 @@ searcher:
 hyperparameters:
   base_model:
     type: const
-    val: "Qwen/Qwen2.5-3B-Instruct"
+    val: "Qwen/Qwen2.5-1.5B-Instruct"
   lora_r:
     type: categorical
     vals: [8, 16, 32, 64]

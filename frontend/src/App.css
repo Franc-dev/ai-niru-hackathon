@@ -412,6 +412,27 @@
   box-shadow: 0 12px 34px rgba(6, 10, 20, 0.32);
 }
 
+.message-content .md-content p {
+  margin: 0 0 0.6rem;
+}
+.message-content .md-content p:last-child {
+  margin-bottom: 0;
+}
+.message-content .md-list {
+  margin: 0.4rem 0 0.6rem;
+  padding-left: 1.25rem;
+}
+.message-content .md-list li {
+  margin-bottom: 0.25rem;
+}
+.message-content .md-content strong {
+  font-weight: 600;
+  color: inherit;
+}
+.message-content .md-content {
+  white-space: normal;
+}
+
 .message-assistant.pending .message-content {
   color: var(--ink-300);
 }

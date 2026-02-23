@@ -56,7 +56,7 @@ python training/scripts/merge_localized_data.py
 
 ```bash
 python training/scripts/train_lora_chat.py ^
-  --base-model Qwen/Qwen2.5-3B-Instruct ^
+  --base-model Qwen/Qwen2.5-1.5B-Instruct ^
   --train-file data/training/mentalchat_bilingual_train.jsonl ^
   --eval-file data/training/mentalchat_bilingual_val.jsonl ^
   --output-dir training/artifacts/emns-chat-lora-v1
@@ -71,14 +71,14 @@ Notes:
 Base model only:
 
 ```bash
-python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-3B-Instruct --port 8001
+python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-1.5B-Instruct --port 8001
 ```
 
 Base + LoRA adapter:
 
 ```bash
 python training/scripts/serve_local_model.py ^
-  --model-id Qwen/Qwen2.5-3B-Instruct ^
+  --model-id Qwen/Qwen2.5-1.5B-Instruct ^
   --adapter-path training/artifacts/emns-chat-lora-v1 ^
   --port 8001
 ```
@@ -107,7 +107,7 @@ End-to-end run sequence:
 
 ```bash
 # terminal 1
-python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-3B-Instruct --adapter-path training/artifacts/emns-chat-lora-v1 --port 8001
+python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-1.5B-Instruct --adapter-path training/artifacts/emns-chat-lora-v1 --port 8001
 
 # terminal 2
 cd backend

@@ -37,9 +37,10 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
-    max_new_tokens: int = 128
-    temperature: float = 0.7
-    top_p: float = 0.9
+    max_new_tokens: int = 180
+    temperature: float = 0.0
+    top_p: float = 1.0
+    repetition_penalty: float = 1.08
 
 
 class ChatResponse(BaseModel):
@@ -145,15 +146,22 @@ async def chat(request: ChatRequest):
     if attention_mask is not None:
         attention_mask = attention_mask.to(_model.device)
 
+    do_sample = request.temperature > 0
+    gen_kwargs = {
+        "max_new_tokens": request.max_new_tokens,
+        "pad_token_id": _tokenizer.pad_token_id,
+        "repetition_penalty": getattr(request, "repetition_penalty", 1.08),
+        "do_sample": do_sample,
+    }
+    if do_sample:
+        gen_kwargs["temperature"] = request.temperature
+        gen_kwargs["top_p"] = request.top_p
+
     with torch.inference_mode():
         outputs = _model.generate(
             input_ids,
             attention_mask=attention_mask,
-            max_new_tokens=request.max_new_tokens,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            do_sample=request.temperature > 0,
-            pad_token_id=_tokenizer.pad_token_id,
+            **gen_kwargs,
         )
 
     # Only decode the newly generated tokens

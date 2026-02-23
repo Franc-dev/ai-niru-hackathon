@@ -87,7 +87,7 @@ def main() -> None:
     assert info is not None, "This script must run inside a Determined experiment"
     hparams = info.trial.hparams
 
-    base_model = hparams.get("base_model", "Qwen/Qwen2.5-3B-Instruct")
+    base_model = hparams.get("base_model", "Qwen/Qwen2.5-1.5B-Instruct")
     lora_r = int(hparams.get("lora_r", 16))
     lora_alpha = int(hparams.get("lora_alpha", 32))
     lora_dropout = float(hparams.get("lora_dropout", 0.05))

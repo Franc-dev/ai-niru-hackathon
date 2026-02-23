@@ -66,7 +66,7 @@ def main() -> None:
     parser.add_argument("--build-max-assistant-chars", type=int, default=3000)
     parser.add_argument("--build-translation-num-beams", type=int, default=1)
     parser.add_argument("--pipeline-status-file", default="training/reports/pipeline_status.json")
-    parser.add_argument("--base-model", default="Qwen/Qwen2.5-3B-Instruct")
+    parser.add_argument("--base-model", default="Qwen/Qwen2.5-1.5B-Instruct")
     parser.add_argument("--train-file", default="data/training/combined_train.jsonl")
     parser.add_argument("--eval-file", default="data/training/combined_val.jsonl")
     parser.add_argument("--output-dir", default="training/artifacts/emns-chat-lora-v1")

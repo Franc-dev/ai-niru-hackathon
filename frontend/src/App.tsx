@@ -41,6 +41,58 @@ const getInitialLanguage = (): LanguageCode => {
   return storedLanguage === 'sw' ? 'sw' : 'en'
 }
 
+function MarkdownContent({ content }: { content: string }) {
+  const formatInline = (text: string): React.ReactNode => {
+    const parts: React.ReactNode[] = []
+    let rest = text
+    let key = 0
+    while (rest.length > 0) {
+      const boldMatch = rest.match(/\*\*(.+?)\*\*/)
+      if (boldMatch && boldMatch.index !== undefined) {
+        if (boldMatch.index > 0) parts.push(<span key={key++}>{rest.slice(0, boldMatch.index)}</span>)
+        parts.push(<strong key={key++}>{boldMatch[1]}</strong>)
+        rest = rest.slice(boldMatch.index + boldMatch[0].length)
+      } else {
+        parts.push(<span key={key++}>{rest}</span>)
+        break
+      }
+    }
+    return parts.length === 1 ? parts[0] : <>{parts}</>
+  }
+  const lines = content.split('\n')
+  const elements: React.ReactNode[] = []
+  let listItems: { text: string; ordered: boolean }[] = []
+  const flushList = () => {
+    if (listItems.length === 0) return
+    const ordered = listItems[0].ordered
+    const ListTag = ordered ? 'ol' : 'ul'
+    elements.push(
+      <ListTag key={elements.length} className="md-list">
+        {listItems.map((item, i) => (
+          <li key={i}>{formatInline(item.text)}</li>
+        ))}
+      </ListTag>
+    )
+    listItems = []
+  }
+  for (const line of lines) {
+    const olMatch = line.match(/^(\d+)\.\s+(.+)$/)
+    const ulMatch = line.match(/^[-*]\s+(.+)$/)
+    if (olMatch) {
+      if (listItems.length > 0 && !listItems[0].ordered) flushList()
+      listItems.push({ text: olMatch[2], ordered: true })
+    } else if (ulMatch) {
+      if (listItems.length > 0 && listItems[0].ordered) flushList()
+      listItems.push({ text: ulMatch[1], ordered: false })
+    } else {
+      flushList()
+      if (line.trim()) elements.push(<p key={elements.length}>{formatInline(line)}</p>)
+    }
+  }
+  flushList()
+  return <div className="md-content">{elements}</div>
+}
+
 function TypingDots() {
   return (
     <span className="typing-dots">
@@ -764,7 +816,9 @@ function App() {
                       </div>
                     </div>
                   ) : (
-                    <div className="message-content">{message.content}</div>
+                    <div className="message-content">
+                      {isAssistant ? <MarkdownContent content={message.content} /> : message.content}
+                    </div>
                   )}
                 </div>
 

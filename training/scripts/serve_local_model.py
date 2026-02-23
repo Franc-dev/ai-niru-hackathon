@@ -26,9 +26,10 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[Message]
-    max_new_tokens: int = Field(default=256, ge=1, le=2048)
-    temperature: float = Field(default=0.2, ge=0.0, le=2.0)
-    top_p: float = Field(default=0.95, ge=0.1, le=1.0)
+    max_new_tokens: int = Field(default=180, ge=1, le=2048)
+    temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    top_p: float = Field(default=1.0, ge=0.1, le=1.0)
+    repetition_penalty: float = Field(default=1.08, ge=1.0, le=2.0)
 
 
 class EmbeddingRequest(BaseModel):
@@ -73,16 +74,21 @@ def create_app(state: State) -> FastAPI:
                 inputs = {k: v.to(state.device) for k, v in inputs.items()}
                 input_len = inputs["input_ids"].shape[1]
 
+                do_sample = request.temperature > 0
+                gen_kwargs = {
+                    **inputs,
+                    "max_new_tokens": request.max_new_tokens,
+                    "do_sample": do_sample,
+                    "repetition_penalty": request.repetition_penalty,
+                    "eos_token_id": state.tokenizer.eos_token_id,
+                    "pad_token_id": state.tokenizer.eos_token_id,
+                }
+                if do_sample:
+                    gen_kwargs["temperature"] = max(request.temperature, 1e-5)
+                    gen_kwargs["top_p"] = request.top_p
+
                 with state.torch_module.inference_mode():
-                    generated = state.chat_model.generate(
-                        **inputs,
-                        max_new_tokens=request.max_new_tokens,
-                        do_sample=request.temperature > 0,
-                        temperature=max(request.temperature, 1e-5),
-                        top_p=request.top_p,
-                        eos_token_id=state.tokenizer.eos_token_id,
-                        pad_token_id=state.tokenizer.eos_token_id,
-                    )
+                    generated = state.chat_model.generate(**gen_kwargs)
 
                 output_tokens = generated[0][input_len:]
                 content = state.tokenizer.decode(output_tokens, skip_special_tokens=True).strip()
@@ -174,7 +180,7 @@ def load_state(args: argparse.Namespace) -> State:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-id", default="Qwen/Qwen2.5-3B-Instruct")
+    parser.add_argument("--model-id", default="Qwen/Qwen2.5-1.5B-Instruct", help="Must match LoRA training base (1.5B for emns-chat-lora-v1)")
     parser.add_argument("--adapter-path", default="")
     parser.add_argument("--embedding-model-id", default="intfloat/multilingual-e5-base")
     parser.add_argument("--host", default="0.0.0.0")

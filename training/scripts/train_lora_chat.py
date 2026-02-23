@@ -14,7 +14,7 @@ from pathlib import Path
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base-model", default="Qwen/Qwen2.5-3B-Instruct")
+    parser.add_argument("--base-model", default="Qwen/Qwen2.5-1.5B-Instruct", help="Base model; must match when loading LoRA adapter")
     parser.add_argument("--train-file", default="data/training/mentalchat_bilingual_train.jsonl")
     parser.add_argument("--eval-file", default="data/training/mentalchat_bilingual_val.jsonl")
     parser.add_argument("--output-dir", default="training/artifacts/emns-chat-lora-v1")

@@ -11,7 +11,7 @@ This maps the technical roadmap training requirements to repo implementation.
 
 1. Stage 1: Baseline Model Selection
 - Implemented by `training/scripts/train_lora_chat.py` with configurable base model.
-- Default: `Qwen/Qwen1.5-3B-Instruct`.
+- Default: `Qwen/Qwen2.5-1.5B-Instruct`.
 
 2. Stage 2: Domain Adaptation (Bilingual + Kenyan context)
 - Implemented by `training/scripts/build_mentalchat_bilingual.py`.

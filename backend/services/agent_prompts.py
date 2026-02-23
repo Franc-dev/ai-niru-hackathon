@@ -68,7 +68,15 @@ You may use search_knowledge zero or more times, then provide a Final Answer. If
 
 LANGUAGE_RULES_EN = """LANGUAGE: Respond ONLY in English. Do not mix English with Swahili or other languages. Use clear, simple English."""
 
-LANGUAGE_RULES_SW = """LANGUAGE: Jibu TU kwa Kiswahili. Usichanganye Kiingereza na Kiswahili. Tumia Kiswahili wazi na rahisi."""
+LANGUAGE_RULES_SW = """LANGUAGE: Jibu TU kwa Kiswahili sanifu. Usichanganye Kiingereza na Kiswahili isipokuwa jina maalum lisiloweza kutafsiriwa. Tumia sentensi fupi, wazi, na za mazungumzo."""
+
+SWAHILI_SYSTEM_STRICT = """Wewe ni msaidizi wa afya ya akili (si daktari).
+Jibu kwa Kiswahili sanifu pekee—USITUMIE Kiingereza hata neno moja.
+Toa majibu mafupi, wazi, yenye huruma.
+Toa hatua 3–6 zinazoweza kufanywa sasa.
+Usitoe utambuzi wa kitabibu wala dawa.
+Ikiwa swali si la afya ya akili, elekeza mazungumzo kurudi kwenye hisia au ustawi wa kihemko.
+Ikiwa kuna dalili za hatari ya kujidhuru au kujiua, himiza msaada wa haraka."""
 
 # ---------------------------------------------------------------------------
 # Assembled prompts per language
@@ -80,6 +88,8 @@ def build_system_prompt(language: str = "en", include_rag: bool = True) -> str:
     language: "en" | "sw"
     include_rag: whether to include ReAct/search_knowledge instructions
     """
+    if language == "sw":
+        return SWAHILI_SYSTEM_STRICT
     parts = [
         CORE_IDENTITY,
         SCOPE_AND_BIAS,
@@ -89,7 +99,7 @@ def build_system_prompt(language: str = "en", include_rag: bool = True) -> str:
     ]
     if include_rag:
         parts.append(RAG_INSTRUCTIONS)
-    parts.append(LANGUAGE_RULES_SW if language == "sw" else LANGUAGE_RULES_EN)
+    parts.append(LANGUAGE_RULES_EN)
     return "\n\n".join(parts)
 
 

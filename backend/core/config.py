@@ -3,7 +3,7 @@ Application Configuration
 """
 from typing import List, Union
 from pydantic import field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 VERCEL_ORIGIN = "https://ai-niru-hackathon.vercel.app"
@@ -28,6 +28,12 @@ def _parse_cors_origins(v: Union[str, List[str]]) -> List[str]:
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
     PROJECT_NAME: str = "Elevana Hackathon"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
@@ -62,6 +68,12 @@ class Settings(BaseSettings):
     LOCAL_MODEL_URL: str = ""
     LOCAL_EMBEDDING_URL: str = ""
 
+    # Chat retrieval (RAG)
+    VECTOR_DB_TYPE: str = "placeholder"
+    CHROMA_PERSIST_DIR: str = "./chroma_data"
+    RAG_COLLECTION_NAME: str = "rag_docs"
+    RAG_TOP_K: int = 5
+
     # ElevenLabs Voice
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID_EN: str = ""
@@ -80,9 +92,15 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    @field_validator("VECTOR_DB_TYPE", mode="before")
+    @classmethod
+    def normalize_vector_db_type(cls, v):
+        value = str(v or "placeholder").strip().lower()
+        if value == "placeholder":
+            return "chroma"
+        if value in {"chroma", "none"}:
+            return value
+        return "placeholder"
 
 
 settings = Settings()

@@ -17,9 +17,9 @@ import {
   usePinConversationMutation,
   useSignupMutation,
   useUpdateLanguageMutation,
-} from './api/queries'
 import { getLanguageLabel, t } from './i18n'
 import LandingPage from './LandingPage'
+import PolicyPage, { PolicyType } from './PolicyPage'
 import VoiceOrb from './VoiceOrb'
 
 const LANGUAGE_STORAGE_KEY = 'ai_niru_language'
@@ -155,13 +155,14 @@ function ConfirmDialog({
   )
 }
 
-type AppScreen = 'landing' | 'auth' | 'app'
+type AppScreen = 'landing' | 'auth' | 'app' | 'policy'
 
 function App() {
   const [screen, setScreen] = useState<AppScreen>(() => {
     if (getStoredToken()) return 'app'
     return 'landing'
   })
+  const [activePolicy, setActivePolicy] = useState<PolicyType>('privacy')
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getStoredToken()))
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [email, setEmail] = useState('')
@@ -499,6 +500,21 @@ function App() {
         onGetStarted={handleGetStarted}
         language={language}
         onLanguageChange={handleLanguageChange}
+        onNavigate={(policy) => {
+          setActivePolicy(policy)
+          setScreen('policy')
+        }}
+      />
+    )
+  }
+
+  if (screen === 'policy') {
+    return (
+      <PolicyPage
+        onBack={() => setScreen('landing')}
+        language={language}
+        onLanguageChange={handleLanguageChange}
+        policyType={activePolicy}
       />
     )
   }
@@ -521,7 +537,7 @@ function App() {
               onClick={() => setScreen('landing')}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {language === 'en' ? 'Back' : 'Rudi'}
             </button>
@@ -609,8 +625,8 @@ function App() {
               </p>
             )}
             <button type="button" className="auth-submit" onClick={handleAuthSubmit} disabled={isAuthLoading}>
-              {isAuthLoading 
-                ? (language === 'en' ? 'Please wait...' : 'Tafadhali subiri...') 
+              {isAuthLoading
+                ? (language === 'en' ? 'Please wait...' : 'Tafadhali subiri...')
                 : (authMode === 'login' ? t(language, 'login') : t(language, 'signup'))}
             </button>
           </div>
@@ -877,10 +893,10 @@ function App() {
               title={t(language, 'voiceMode')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"/>
-                <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor" />
+                <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
             <input

@@ -7,6 +7,7 @@ interface LandingPageProps {
   onGetStarted: () => void
   language: LanguageCode
   onLanguageChange: (lang: LanguageCode) => void
+  onNavigate?: (page: 'privacy' | 'terms' | 'cookie') => void
 }
 
 const content = {
@@ -43,6 +44,10 @@ const content = {
     ctaTitle: 'Ready to feel heard?',
     ctaSubtitle: 'Take the first step towards better mental wellness.',
     footerTagline: 'Elevana — Mental health support, elevated.',
+    privacy: 'Privacy',
+    terms: 'Terms',
+    cookie: 'Cookie Policy',
+    contact: 'Contact'
   },
   sw: {
     heroTagline: 'Mshiriki wako kwa',
@@ -77,6 +82,10 @@ const content = {
     ctaTitle: 'Uko tayari kusikilizwa?',
     ctaSubtitle: 'Chukua hatua ya kwanza kuelekea afya bora ya akili.',
     footerTagline: 'Elevana — Msaada wa afya ya akili, uliopandishwa.',
+    privacy: 'Faragha',
+    terms: 'Masharti',
+    cookie: 'Sera ya Vidakuzi',
+    contact: 'Mawasiliano'
   },
 }
 
@@ -89,12 +98,13 @@ function FloatingShape({ className, delay = 0 }: { className: string; delay?: nu
   )
 }
 
-export default function LandingPage({ onGetStarted, language, onLanguageChange }: LandingPageProps) {
+export default function LandingPage({ onGetStarted, language, onLanguageChange, onNavigate }: LandingPageProps) {
   const [isVisible, setIsVisible] = useState(false)
   const t = content[language]
 
   useEffect(() => {
     setIsVisible(true)
+    window.scrollTo(0, 0)
   }, [])
 
   const scrollToFeatures = () => {
@@ -150,7 +160,7 @@ export default function LandingPage({ onGetStarted, language, onLanguageChange }
               <button className="btn-primary" onClick={onGetStarted}>
                 {t.getStarted}
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               <button className="btn-secondary" onClick={scrollToFeatures}>
@@ -231,10 +241,35 @@ export default function LandingPage({ onGetStarted, language, onLanguageChange }
       <footer className="landing-footer">
         <div className="landing-container">
           <p className="footer-tagline">{t.footerTagline}</p>
-          <div className="footer-links">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Contact</span>
+          <div className="footer-links" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              className="footer-link-btn"
+              onClick={() => onNavigate?.('privacy')}
+              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+            >
+              {t.privacy}
+            </button>
+            <button
+              className="footer-link-btn"
+              onClick={() => onNavigate?.('terms')}
+              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+            >
+              {t.terms}
+            </button>
+            <button
+              className="footer-link-btn"
+              onClick={() => onNavigate?.('cookie')}
+              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+            >
+              {t.cookie}
+            </button>
+            <button
+              className="footer-link-btn"
+              onClick={() => window.location.href = 'mailto:hello@elevana.com'}
+              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+            >
+              {t.contact}
+            </button>
           </div>
         </div>
       </footer>

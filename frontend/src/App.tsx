@@ -17,6 +17,7 @@ import {
   usePinConversationMutation,
   useSignupMutation,
   useUpdateLanguageMutation,
+} from './api/queries'
 import { getLanguageLabel, t } from './i18n'
 import LandingPage from './LandingPage'
 import PolicyPage, { PolicyType } from './PolicyPage'

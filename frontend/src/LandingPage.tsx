@@ -245,28 +245,28 @@ export default function LandingPage({ onGetStarted, language, onLanguageChange, 
             <button
               className="footer-link-btn"
               onClick={() => onNavigate?.('privacy')}
-              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: '#000', cursor: 'pointer', padding: 0 }}
             >
               {t.privacy}
             </button>
             <button
               className="footer-link-btn"
               onClick={() => onNavigate?.('terms')}
-              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: '#000', cursor: 'pointer', padding: 0 }}
             >
               {t.terms}
             </button>
             <button
               className="footer-link-btn"
               onClick={() => onNavigate?.('cookie')}
-              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: '#000', cursor: 'pointer', padding: 0 }}
             >
               {t.cookie}
             </button>
             <button
               className="footer-link-btn"
               onClick={() => window.location.href = 'mailto:hello@elevana.com'}
-              style={{ background: 'none', border: 'none', color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: '#000', cursor: 'pointer', padding: 0 }}
             >
               {t.contact}
             </button>

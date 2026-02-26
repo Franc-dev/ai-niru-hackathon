@@ -1,4 +1,4 @@
-# Elevana Hackathon
+# Elevate Minds Network System (Elevana Hackathon)
 Full-stack application with FastAPI backend and React TypeScript frontend.
 
 ## Tech Stack

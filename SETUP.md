@@ -14,7 +14,7 @@ Quick setup instructions for getting the project running locally.
    ```bash
    cd backend
    ```
-
+   
 2. **Create virtual environment**
    ```bash
    python -m venv venv
@@ -29,7 +29,7 @@ Quick setup instructions for getting the project running locally.
    ```bash
    pip install -r requirements.txt
    ```
-
+   
 5. **Configure environment**
    ```bash
    cp .env.example .env

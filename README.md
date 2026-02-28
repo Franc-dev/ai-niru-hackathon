@@ -59,7 +59,7 @@ ai-niru-hackathon/
 ## Development
 
 See individual task files in `tasks/` directory for current work items.
-
+training ingoing
 ## License
 
 See LICENSE file.

@@ -50,6 +50,7 @@ def main():
     from trl import SFTTrainer, SFTConfig
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
     # Dtype
     if not torch.cuda.is_available():
         dtype = torch.float32
@@ -187,7 +188,6 @@ for f in [TRAIN, VAL]:
 ---
 
 ## Cell 4: Train (takes ~2-3 hours, do not interrupt)
-
 ```python
 !python /kaggle/working/train.py \
   --base-model Qwen/Qwen2.5-3B-Instruct \
@@ -223,7 +223,6 @@ else:
 ---
 
 ## Cell 6: Test the model (English + Swahili)
-
 ```python
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer

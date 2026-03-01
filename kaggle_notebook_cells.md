@@ -10,6 +10,7 @@ Copy each cell below into a **new Kaggle notebook** in order.
 
 ```python
 !pip install -q datasets transformers peft trl bitsandbytes accelerate tqdm sentencepiece protobuf
+
 ```
 
 ---
@@ -41,16 +42,13 @@ def main():
     parser.add_argument("--eval-steps", type=int, default=500)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
-
     import torch
     from datasets import load_dataset
     from peft import LoraConfig
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
     from trl import SFTTrainer, SFTConfig
-
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-
     # Dtype
     if not torch.cuda.is_available():
         dtype = torch.float32

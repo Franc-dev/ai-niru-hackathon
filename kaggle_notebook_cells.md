@@ -1,4 +1,4 @@
-# EM-NS Kaggle Training Notebook
+# Elevana Kaggle Training Notebook
 
 Copy each cell below into a **new Kaggle notebook** in order.
 
@@ -19,7 +19,7 @@ Copy each cell below into a **new Kaggle notebook** in order.
 
 ```python
 %%writefile /kaggle/working/train.py
-"""EM-NS LoRA training - compatible with latest trl/transformers on Kaggle."""
+"""Elevana LoRA training - compatible with latest trl/transformers on Kaggle."""
 import argparse, json
 from pathlib import Path
 

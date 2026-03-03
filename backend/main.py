@@ -1,12 +1,23 @@
 """
 FastAPI Main Application Entry Point
 """
+
+import os
+import sys
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.core.config import settings
-from backend.core.database import connect_to_mongo, close_mongo_connection
+
+# Allow running from inside backend/ (e.g., `uvicorn main:app`) by ensuring
+# the project root is on sys.path so `backend.*` imports resolve.
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 from backend.api.v1.router import api_router
+from backend.core.config import settings
+from backend.core.database import close_mongo_connection, connect_to_mongo
 from backend.repositories.conversation_repo import ensure_conversation_indexes
 from backend.repositories.user_repo import ensure_user_indexes
 

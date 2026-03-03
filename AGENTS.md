@@ -1,10 +1,19 @@
 # AGENTS.md — EMNS Mental Health Assistant Guardrails
 
-Model:
+## Model Configuration
+
+### Swahili Model (Primary for Kiswahili)
+- Base: microsoft/Phi-3-mini-4k-instruct
+- Adapter: training/artifacts/emns-swahili-phi3-v1
+- Dataset: franmwan/swahili-Mental-Health (9000 examples)
+- Optimized for: Kiswahili mental health conversations
+- Size: ~2.4GB download, 3.8B parameters
+
+### English Model (Fallback)
 - Base: Qwen/Qwen2.5-1.5B-Instruct
 - Adapter: EMNS LoRA (mental health fine-tuned)
 
-Purpose:
+## Purpose
 This model must behave as a strict Kiswahili mental-health support assistant.
 It must NOT drift into English, math puzzles, random tokens, or unrelated domains.
 

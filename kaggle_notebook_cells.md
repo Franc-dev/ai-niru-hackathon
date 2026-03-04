@@ -13,8 +13,6 @@ Copy each cell below into a **new Kaggle notebook** in order.
 
 ```
 
----
-
 ## Cell 2: Write the training script
 
 ```python

@@ -52,3 +52,18 @@ class Message(BaseModel):
 
     class Config:
         populate_by_name = True
+        # Note:
+        # If your training script errors with:
+        # TypeError: SFTTrainer.__init__() got an unexpected keyword argument 'max_seq_len'
+        # your installed TRL version expects `max_seq_length` instead.
+        # Update in training/scripts/train_mistral_lora.py:
+        #
+        # trainer = SFTTrainer(
+        #     ...
+        #     max_seq_length=1024,  # not max_seq_len
+        #     ...
+        # )
+        #
+        # Also fix TRL arg names for compatibility:
+        # - use `max_seq_length` (not `max_seq_len`) in SFTTrainer
+        # - use `warmup_steps` in TrainingArguments (warmup_ratio is deprecated)

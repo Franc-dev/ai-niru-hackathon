@@ -794,6 +794,29 @@ function App() {
             <div className="empty-chat-state">
               <h3>{t(language, 'welcome')}</h3>
               <p>{t(language, 'startPrompt')}</p>
+              
+              {/* Quick Action Buttons */}
+              <div className="quick-actions">
+                {language === 'sw' ? (
+                  <>
+                    <button type="button" onClick={() => setInputValue('Nahisi huzuni sana')}>😢 Huzuni</button>
+                    <button type="button" onClick={() => setInputValue('Nina wasiwasi sana')}>😰 Wasiwasi</button>
+                    <button type="button" onClick={() => setInputValue('Nahisi peke yangu')}>😔 Upweke</button>
+                    <button type="button" onClick={() => setInputValue('Msongo wa kazi')}>💼 Kazi</button>
+                    <button type="button" onClick={() => setInputValue('Shida ya kulala')}>😴 Kulala</button>
+                    <button type="button" onClick={() => setInputValue('Matatizo ya familia')}>👨‍👩‍👧 Familia</button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => setInputValue('I feel very sad')}>😢 Sad</button>
+                    <button type="button" onClick={() => setInputValue('I feel anxious')}>😰 Anxious</button>
+                    <button type="button" onClick={() => setInputValue('I feel lonely')}>😔 Lonely</button>
+                    <button type="button" onClick={() => setInputValue('Work stress')}>💼 Work</button>
+                    <button type="button" onClick={() => setInputValue("Can't sleep")}>😴 Sleep</button>
+                    <button type="button" onClick={() => setInputValue('Family issues')}>👨‍👩‍👧 Family</button>
+                  </>
+                )}
+              </div>
             </div>
           )}
           {!isHistoryLoading && displayMessages.map((message, index) => {

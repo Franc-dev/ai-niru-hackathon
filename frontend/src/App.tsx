@@ -42,7 +42,96 @@ const getInitialLanguage = (): LanguageCode => {
   return storedLanguage === 'sw' ? 'sw' : 'en'
 }
 
+// Rich content component for counselors and resources
+function RichContent({ content }: { content: string }) {
+  const isCounselor = content.includes('📞') && content.includes('📍')
+  const isResource = content.includes('📺') || content.includes('YouTube')
+  
+  if (isCounselor) {
+    return (
+      <div className="counselor-cards">
+        {content.split('\n\n').map((section, idx) => {
+          if (!section.includes('**')) return null
+          const nameMatch = section.match(/\*\*(.+?)\*\*/)
+          const name = nameMatch ? nameMatch[1] : ''
+          const location = section.match(/📍\s*(.+?)(?:\n|$)/)?.[1] || ''
+          const rating = section.match(/⭐\s*(.+?)(?:\n|$)/)?.[1] || ''
+          const specialization = section.match(/🏥\s*(.+?)(?:\n|$)/)?.[1] || ''
+          const phone = section.match(/📞\s*(.+?)(?:\n|$)/)?.[1] || ''
+          const languages = section.match(/🗣️\s*(.+?)(?:\n|$)/)?.[1] || ''
+          
+          return (
+            <div key={idx} className="counselor-card">
+              <div className="counselor-header">
+                <span className="counselor-name">{name}</span>
+                {rating && <span className="counselor-rating">⭐ {rating}</span>}
+              </div>
+              <div className="counselor-details">
+                {specialization && <span className="counselor-spec">🏥 {specialization}</span>}
+                {location && <span className="counselor-loc">📍 {location}</span>}
+                {phone && <a href={`tel:${phone}`} className="counselor-phone">📞 {phone}</a>}
+                {languages && <span className="counselor-lang">🗣️ {languages}</span>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  
+  if (isResource) {
+    return (
+      <div className="resource-cards">
+        {content.split('\n\n').map((section, idx) => {
+          if (!section.includes('**')) return null
+          const titleMatch = section.match(/\*\*(.+?)\*\*/)
+          const title = titleMatch ? titleMatch[1] : ''
+          const desc = section.match(/📺.*?\n\s*(.+?)(?:⏱️|$)/)?.[1] || ''
+          const duration = section.match(/⏱️\s*(.+?)(?:\s*\|)/)?.[1] || ''
+          const lang = section.match(/🗣️\s*(.+?)(?:\n|$)/)?.[1] || ''
+          const url = section.match(/🔗\s*(https:\/\/[^\s]+)/)?.[1] || section.match(/https:\/\/[^\s]+/)?.[0] || ''
+          
+          let thumbnail = ''
+          let videoId = ''
+          if (url.includes('youtube.com/watch')) {
+            videoId = url.match(/v=([^&]+)/)?.[1] || ''
+            thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+          }
+          
+          return (
+            <div key={idx} className="resource-card">
+              {thumbnail && (
+                <a href={url} target="_blank" rel="noopener noreferrer" className="resource-thumbnail">
+                  <img src={thumbnail} alt={title} />
+                  <span className="play-button">▶</span>
+                </a>
+              )}
+              <div className="resource-info">
+                <a href={url} target="_blank" rel="noopener noreferrer" className="resource-title">
+                  {title}
+                </a>
+                {desc && <p className="resource-desc">{desc}</p>}
+                <div className="resource-meta">
+                  {duration && <span>⏱️ {duration}</span>}
+                  {lang && <span>🗣️ {lang}</span>}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  
+  return <></>
+}
+
 function MarkdownContent({ content }: { content: string }) {
+  // Check if content contains counselor or resource markers
+  if ((content.includes('📍') && content.includes('📞')) || content.includes('📺') || content.includes('YouTube')) {
+    return <RichContent content={content} />
+  }
+  
   const formatInline = (text: string): React.ReactNode => {
     const parts: React.ReactNode[] = []
     let rest = text
@@ -797,25 +886,42 @@ function App() {
               
               {/* Quick Action Buttons */}
               <div className="quick-actions">
-                {language === 'sw' ? (
-                  <>
-                    <button type="button" onClick={() => setInputValue('Nahisi huzuni sana')}>😢 Huzuni</button>
-                    <button type="button" onClick={() => setInputValue('Nina wasiwasi sana')}>😰 Wasiwasi</button>
-                    <button type="button" onClick={() => setInputValue('Nahisi peke yangu')}>😔 Upweke</button>
-                    <button type="button" onClick={() => setInputValue('Msongo wa kazi')}>💼 Kazi</button>
-                    <button type="button" onClick={() => setInputValue('Shida ya kulala')}>😴 Kulala</button>
-                    <button type="button" onClick={() => setInputValue('Matatizo ya familia')}>👨‍👩‍👧 Familia</button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => setInputValue('I feel very sad')}>😢 Sad</button>
-                    <button type="button" onClick={() => setInputValue('I feel anxious')}>😰 Anxious</button>
-                    <button type="button" onClick={() => setInputValue('I feel lonely')}>😔 Lonely</button>
-                    <button type="button" onClick={() => setInputValue('Work stress')}>💼 Work</button>
-                    <button type="button" onClick={() => setInputValue("Can't sleep")}>😴 Sleep</button>
-                    <button type="button" onClick={() => setInputValue('Family issues')}>👨‍👩‍👧 Family</button>
-                  </>
-                )}
+                <div className="quick-actions-section">
+                  <span className="quick-actions-label">{language === 'sw' ? 'Unahisi vipi?' : 'How are you feeling?'}</span>
+                  <div className="quick-actions-buttons">
+                    {language === 'sw' ? (
+                      <>
+                        <button type="button" onClick={() => setInputValue('Nahisi huzuni sana')}>😢 Huzuni</button>
+                        <button type="button" onClick={() => setInputValue('Nina wasiwasi sana')}>😰 Wasiwasi</button>
+                        <button type="button" onClick={() => setInputValue('Nahisi peke yangu')}>😔 Upweke</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setInputValue('I feel very sad')}>😢 Sad</button>
+                        <button type="button" onClick={() => setInputValue('I feel anxious')}>😰 Anxious</button>
+                        <button type="button" onClick={() => setInputValue('I feel lonely')}>😔 Lonely</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="quick-actions-section quick-actions-tools">
+                  <span className="quick-actions-label">{language === 'sw' ? 'Zana za msaada' : 'Helpful tools'}</span>
+                  <div className="quick-actions-buttons">
+                    {language === 'sw' ? (
+                      <>
+                        <button type="button" onClick={() => setInputValue('Nataka mkubwa')}>🆘 Mkubwa</button>
+                        <button type="button" onClick={() => setInputValue('Tafuta mshauri')}>👨‍⚕️ Mshauri</button>
+                        <button type="button" onClick={() => setInputValue('Video za afya ya akili')}>🎥 Video</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => setInputValue('I need crisis help')}>🆘 Crisis</button>
+                        <button type="button" onClick={() => setInputValue('Find a counselor')}>👨‍⚕️ Counselor</button>
+                        <button type="button" onClick={() => setInputValue('Show me videos')}>🎥 Videos</button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}

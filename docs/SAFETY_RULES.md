@@ -1,132 +1,79 @@
-# Safety Rules and Escalation Flow
+# AI NirU - Safety Rules & Crisis Protocols
 
-## Overview
+## 1. Overview
+Safety is the foundational principle of AI NirU. We employ a layered approach to safety that includes hardcoded crisis filters, semantic guardrails, and mission-specific agent prompts.
 
-This document defines the safety rules and escalation procedures for the Elevana Hackathon application.
+## 2. Crisis Detection Protocol (High Priority)
+The Crisis Detection Tool (`4_serve_sklearn_rag.py`) is the most critical safety layer. It is executed **first** for every incoming chat message.
 
-## Safety Rules
+### 2.1 Monitored Keywords (Swahili & English)
+The system checks for over 20 specific terms related to self-harm, suicide, and emergency distress, including:
+- **Swahili:** kujiua, kujiharibia, kujidhuru, nataka kufa, siwezi kuishi.
+- **English:** suicide, kill myself, want to die, end my life, self-harm.
 
-### Content Moderation Rules
+### 2.2 Crisis Response Workflow
+When a crisis keyword is detected:
+1. **Immediate Interruption:** All other tool logic and agent reasoning are halted.
+2. **Canned Response:** A culturally appropriate, empathetic response is returned immediately.
+3. **Emergency Hotline:** The user is provided with the **Befrienders Kenya** hotline (**0800 723 253**) and the general emergency number (**999**).
+4. **Visibility:** The UI highlights the emergency information with high prominence.
 
-**Status:** Defined for MVP (policy-level, implementation pending)
+---
 
-#### Categories to Monitor
-- [x] Harmful content (e.g. threats, self-harm, glorification of harm)
-- [x] Hate speech (targeting protected classes)
-- [x] Violence (graphic or non-graphic)
-- [x] Self-harm (ideation, intent, instructions)
-- [x] Illegal activities (planning, instructions, admission of serious crime)
-- [x] Personal information requests (doxxing, sensitive data disclosure)
-- [x] Spam/abuse (harassment, scams, repetitive unwanted content)
+## 3. Semantic Guardrails (Off-Topic Filter)
+The Guardrails service (`backend/services/guardrails.py`) prevents the model from being misused for non-mental health purposes.
 
-#### Rule Implementation (MVP policy)
-- Rules will be checked in `backend/services/agent.py`
-- Each message will be evaluated before processing and response generation
-- Rules can be configured via settings or database
-- Each violation is mapped to a severity level (`low`, `medium`, `high`, `critical`)
-- High/critical violations will trigger escalation according to the flow below
+### 3.1 Monitored Topics
+The system automatically identifies and redirects users who try to use AI NirU for:
+- Programming/Coding (Python, Java, Javascript).
+- Math, Physics, or Homework help.
+- General web search topics (Weather, Stock prices, Cooking recipes).
 
-### Safety Check Response
+### 3.2 Redirect Strategy
+Instead of a generic error, the system provides a polite redirect in the user's detected language (Swahili/English), explaining that its purpose is mental health and emotional well-being, and inviting the user to share their feelings.
 
-```python
-{
-    "safe": bool,        # Whether content passes safety checks
-    "reason": str,       # Reason for rejection (if unsafe)
-    "escalate": bool,    # Whether to escalate to human review
-    "severity": str      # low/medium/high/critical
-}
-```
+---
 
-## Escalation Flow
+## 4. Agent-Level Safety (Voice Agent)
+The Voice Agent (`voice_agent.py`) uses **Claude 4.5 Haiku** with a highly specialized system prompt that enforces:
+- **Empathetic Neutrality:** Staying present and caring without making medical diagnoses.
+- **Short Responses:** Preventing overwhelmed users from receiving long, complex paragraphs.
+- **No Formatting:** Ensuring the text-to-speech output is natural and easy to follow.
 
-### Triggers
+---
 
-Escalation should occur when:
-1. Content fails safety checks with high severity
-2. User requests human assistance
-3. System detects potential harm
-4. Multiple safety violations in short time
-5. User expresses distress or crisis indicators
+## 5. Implementation Status
 
-### Escalation Levels
+| Feature | Implementation Method | Status |
+|---------|-----------------------|--------|
+| Crisis Keywords | Regex / Pattern Matching | **Operational** |
+| Off-Topic Guardrails | Compiled Regex (`guardrails.py`) | **Operational** |
+| RAG Confidence Gate | Similarity Threshold (0.35) | **Operational** |
+| Human Counselor Linking | Counselor Search Tool | **Operational** |
+| Resource Filtering | Resource Search Tool | **Operational** |
 
-#### Level 1: Automatic Filtering
-- **Action:** Block unsafe content, return generic message
-- **Response:** "I can't help with that. How else can I assist you?"
-- **Logging:** Log incident for review
+---
 
-#### Level 2: Flagged Review
-- **Action:** Flag conversation for human review
-- **Response:** Continue conversation but flag for review
-- **Notification:** Alert moderation team
-
-#### Level 3: Immediate Escalation
-- **Action:** Pause conversation, notify human moderator
-- **Response:** "Let me connect you with a team member who can better assist."
-- **Priority:** High priority queue
-
-#### Level 4: Emergency Escalation
-- **Action:** Immediate human intervention
-- **Response:** Direct to crisis resources if applicable
-- **Priority:** Critical
-
-### Escalation Flow Diagram
+## 6. Escalation Flow (Internal Logic)
 
 ```
 User Message
-    ↓
-Safety Check
-    ↓
-┌─────────────────┐
-│ Is Safe?        │
-└─────────────────┘
-    ↓ Yes          ↓ No
-Process          ┌─────────────────┐
-    ↓            │ Check Severity  │
-Response         └─────────────────┘
-                      ↓
-            ┌─────────┴─────────┐
-            ↓                   ↓
-        Low/Medium          High/Critical
-            ↓                   ↓
-        Level 1            Level 3/4
-        Filter             Escalate
+    │
+    ▼
+┌─────────────────────────────────┐
+│ [LAYER 1] Crisis Tool           │──▶ [DETECTED] ──▶ Show Emergency Hotline
+└─────────────────────────────────┘
+    │
+    ▼ [NOT DETECTED]
+┌─────────────────────────────────┐
+│ [LAYER 2] Guardrails Service    │──▶ [OFF-TOPIC] ──▶ Show Support Redirect
+└─────────────────────────────────┘
+    │
+    ▼ [ON-TOPIC]
+┌─────────────────────────────────┐
+│ [LAYER 3] Agent Reasoning       │──▶ [PROCESS] ──▶ Provide Empathetic Help
+└─────────────────────────────────┘
 ```
 
-## Implementation Status
-
-### Current State
-- [x] Safety rule structure defined
-- [x] Escalation flow documented
-- [x] MVP safety policy defined (this document)
-- [ ] Safety rules implemented in code
-- [ ] Escalation system implemented
-- [ ] Human review queue system
-- [ ] Crisis resource integration
-
-### Next Steps
-1. Implement safety checking service based on this MVP policy
-2. Wire escalation decisions into logging/alerting and UI
-3. Build moderation dashboard (optional)
-4. Integrate crisis resources if needed and appropriate
-
-## Configuration
-
-Safety rules can be configured via:
-- Environment variables
-- Database configuration table
-- Admin panel (future)
-
-## Monitoring
-
-- Track safety violations
-- Monitor escalation rates
-- Review false positives
-- Update rules based on patterns
-
-## Notes
-
-- Safety rules should be tailored to the specific use case
-- Escalation flow may need adjustment based on deployment context
-- Consider legal and compliance requirements
-- Regular review and updates of safety rules recommended
+---
+*Last Updated: March 2026*

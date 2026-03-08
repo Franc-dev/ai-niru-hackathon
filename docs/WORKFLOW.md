@@ -1,8 +1,8 @@
-# AI NirU Mental Health Assistant - Architecture & Workflow
+# Elevana Mental Health Assistant - Architecture & Workflow
 
 ## Overview
 
-AI NirU is a bilingual (Swahili/English) mental health chatbot that provides supportive responses based on a curated knowledge base. It uses **semantic similarity** (not generative AI) to ensure zero hallucinations.
+Elevana is a bilingual (Swahili/English) mental health chatbot that provides supportive responses based on a curated knowledge base. It uses **semantic similarity** (not generative AI) to ensure zero hallucinations.
 
 ## System Architecture
 
@@ -181,7 +181,7 @@ MONGODB_URL=mongodb://localhost:27017
 
 ### Server Configuration (4_serve_sklearn_rag.py)
 ```python
-PINECONE_API_KEY = "pcsk_5X3d4w_..."
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "")
 PINECONE_INDEX = "swahili-mental-health"
 EMBEDDER = "sentence-transformers/all-MiniLM-L6-v2"
 CRISIS_THRESHOLD = 0.15

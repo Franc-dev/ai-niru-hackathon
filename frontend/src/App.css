@@ -382,10 +382,31 @@
 
 .quick-actions {
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.quick-actions-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-actions-label {
+  font-size: 0.7rem;
+  color: var(--ink-300);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.quick-actions-buttons {
+  display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
-  margin-top: 0.5rem;
 }
 
 .quick-actions button {
@@ -406,15 +427,192 @@
   transform: translateY(-1px);
 }
 
+.quick-actions-tools button {
+  background: rgba(255, 180, 100, 0.15);
+  border-color: rgba(255, 180, 100, 0.3);
+}
+
+.quick-actions-tools button:hover {
+  background: rgba(255, 180, 100, 0.25);
+  border-color: rgba(255, 180, 100, 0.5);
+}
+
+/* Counselor Cards */
+.counselor-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.counselor-card {
+  background: linear-gradient(135deg, rgba(54, 142, 255, 0.15), rgba(27, 109, 210, 0.1));
+  border: 1px solid rgba(150, 204, 255, 0.3);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.counselor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.counselor-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink-100);
+}
+
+.counselor-rating {
+  font-size: 0.85rem;
+  color: #ffd700;
+}
+
+.counselor-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--ink-300);
+}
+
+.counselor-spec {
+  color: #96ccff;
+}
+
+.counselor-phone {
+  color: #4ade80;
+  text-decoration: none;
+}
+
+.counselor-phone:hover {
+  text-decoration: underline;
+}
+
+/* Resource Cards */
+.resource-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.resource-card {
+  display: flex;
+  gap: 0.75rem;
+  background: rgba(15, 21, 36, 0.6);
+  border: 1px solid rgba(150, 204, 255, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem;
+  align-items: flex-start;
+}
+
+.resource-thumbnail {
+  position: relative;
+  flex-shrink: 0;
+  width: 120px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: block;
+}
+
+.resource-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resource-thumbnail .play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.resource-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #96ccff;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.resource-title:hover {
+  text-decoration: underline;
+}
+
+.resource-desc {
+  font-size: 0.8rem;
+  color: var(--ink-300);
+  margin: 0 0 0.4rem;
+  line-height: 1.4;
+}
+
+.resource-meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--ink-400);
+}
+
 /* Mobile responsive for quick actions */
 @media (max-width: 768px) {
   .quick-actions {
     gap: 0.4rem;
   }
+
+  .quick-actions-label {
+    font-size: 0.65rem;
+  }
   
   .quick-actions button {
     padding: 0.45rem 0.7rem;
     font-size: 0.72rem;
+  }
+  
+  /* Mobile responsive for cards */
+  .counselor-card {
+    padding: 0.75rem;
+  }
+  
+  .counselor-name {
+    font-size: 0.9rem;
+  }
+  
+  .counselor-details {
+    font-size: 0.8rem;
+  }
+  
+  .resource-card {
+    flex-direction: column;
+    padding: 0.6rem;
+  }
+  
+  .resource-thumbnail {
+    width: 100%;
+    height: 140px;
+  }
+  
+  .resource-title {
+    font-size: 0.85rem;
   }
 }
 

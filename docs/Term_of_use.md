@@ -11,7 +11,7 @@ Welcome to Elevana, a mental health assistant for the Kenyan context. By using o
 If you are in an immediate crisis or at risk of self-harm, please do not rely solely on Elevana. **Call the Befrienders Kenya helpline (0800 723 253) or emergency services (999) immediately.** Elevana is programmed to provide these numbers if it detects a crisis.
 
 ## 3. Acceptable Use
-- You agree to use Elevana for its intended purpose: mental health support and emotional well - being. Elevana cannot be used for medical prescription.
+- You agree to use Elevana for its intended purpose: mental health support,emotional well - being and cannot be used for medical prescription.
 - You will not use the service to generate harmful, abusive, or illegal content.
 - Elevana is a bilingual service; please use Swahili or English for the best results.
 

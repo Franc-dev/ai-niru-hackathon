@@ -24,5 +24,25 @@ Elevana is provided "as is" and "as available," without warranties of any kind. 
 ## 6. Limitation of Liability
 The creators of Elevana shall not be liable for any direct, indirect, or incidental damages arising out of your use of the service.
 
+## 7. Age Requirement.
+Elevana is intended for users aged 16 years and above. Users under 18 are encouraged to use the platform with the guidance of a parent, guardian, or responsible adult.
+
+## 8. No Therapist–Client Relationship
+Use of Elevana does not establish a therapist-client, doctor-patient, or counselor-client relationship. The platform provides informational and supportive responses but does not replace professional mental health care.
+
+## 9. User Responsibility
+Users are responsible for how they interpret and use information provided by Elevana. Decisions regarding medical, psychological, or personal matters should be made in consultation with qualified professionals.
+
+## 10. AI Limitations
+Elevana uses artificial intelligence to generate responses. While we strive to provide helpful and supportive information, responses may sometimes be incomplete, outdated, or incorrect.
+
+## 11. Service Availability
+Elevana is currently a prototype system and may be updated, modified, or temporarily unavailable without prior notice as we improve the platform.
+
+## 12. Intellectual property
+All content, software, and design elements associated with Elevana remain the intellectual property of the creators of the Elevate Minds Network System (EMNS). Users may not reproduce or distribute the system without permission.
+
+## 13. Changes to these terms
+We may update these Terms of Use from time to time. Continued use of Elevana after updates constitutes acceptance of the revised terms.
 ---
 *By using Elevana, you acknowledge that you have read and understood these terms.*

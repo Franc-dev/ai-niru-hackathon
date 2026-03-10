@@ -15,8 +15,38 @@ The system checks for over 20 specific terms related to self-harm, suicide, and 
 When a crisis keyword is detected:
 1. **Immediate Interruption:** All other tool logic and agent reasoning are halted.
 2. **Canned Response:** A culturally appropriate, empathetic response is returned immediately.
-3. **Emergency Hotline:** The user is provided with the **Befrienders Kenya** hotline (**0800 723 253**) and the general emergency number (**999**).
-4. **Visibility:** The UI highlights the emergency information with high prominence.
+3. **Emergency Hotline:**
+4. The user is provided with the **Befrienders Kenya** hotline (**0800 723 253**) and the general emergency number (**999**).
+Chiromo Hospital Group - 0800 220 000
+Kenya Red Cross - 1199
+Emergency Medicine Kenya Foundation - 0800 723 253
+Niskize - 0900 620 800
+Kenya Police - 911/999/112
+Domestic/Sexual Violence
+HealthCare Assistance Kenya - 1195
+Kimbilio Trust - 1193
+Gender Violence Recovery Centre - 0800 720 565
+Coalition on Violence Against Women - 0800 720 553
+Gender Based Violence - 21094 Or Send Help SMS To 1198
+Gender Based Violence For Men - 1195 Or 1196
+**Psychological Services**
+**Nairobi**
+KNH (free for U25)
+Kamili Mental Health Organisation - 0700 327 701
+Amani Counselling Centre - 0722 626 590
+NMS - 0110 008 608 / 0110 008 609 (32 clinics round Nairobi)
+**Mombasa**
+Amani Counselling Centre - 0723 647 768
+Chiromo Hospital Group Nyali - 0792 873 125
+**Kisumu**
+Amani Counselling Centre - 0722 626 590
+TINADA Youth Organisation - 0724 018 799
+**Eldoret**
+Hopewell Counselling - 0717 296 275
+**Nakuru**
+PDO Kenya - 0774 354 618 (Monthly Support Group)
+Jawabu Therapy & Counselling - 0708 065 599
+6. **Visibility:** The UI highlights the emergency information with high prominence.
 
 ---
 

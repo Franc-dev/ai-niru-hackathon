@@ -11,6 +11,7 @@ AI NirU is designed with privacy in mind. We collect:
 - To provide empathetic, bilingual mental health support.
 - To detect and respond to mental health crises (e.g., self-harm).
 - To improve our RAG (Retrieval-Augmented Generation) knowledge base.
+- To personalize recommendations and guidance based on individual mental health needs.
 
 ## 3. Data Storage
 - Conversations are stored locally or in our secure database to provide a seamless user experience.

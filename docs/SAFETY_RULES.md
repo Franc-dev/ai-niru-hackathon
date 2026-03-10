@@ -17,9 +17,9 @@ When a crisis keyword is detected:
 2. **Canned Response:** A culturally appropriate, empathetic response is returned immediately.
 3. **Emergency Hotline:**
 4. The user is provided with the **Befrienders Kenya** hotline (**0800 723 253**) and the general emergency number (**999**).
-Chiromo Hospital Group - 0800 220 000
-Kenya Red Cross - 1199
-Emergency Medicine Kenya Foundation - 0800 723 253
+**Chiromo Hospital Group** - 0800 220 000
+**Kenya Red Cross** - 1199
+**Emergency Medicine Kenya Foundation** - 0800 723 253
 Niskize - 0900 620 800
 Kenya Police - 911/999/112
 Domestic/Sexual Violence

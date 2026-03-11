@@ -29,6 +29,7 @@ from backend.repositories.conversation_repo import (
 )
 from backend.repositories.user_repo import update_user_preferred_language
 from backend.services.agent import agent_service
+from backend.services.recommendations import recommendation_service
 from backend.services.safety import check_safety_rules
 
 router = APIRouter()
@@ -62,6 +63,7 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: Optional[str] = None
     message_id: Optional[str] = None
+    metadata: dict | None = None
 
 
 class ChatRequest(BaseModel):
@@ -77,6 +79,7 @@ class ChatResponse(BaseModel):
     conversation_title: str | None = None
     language: LanguageCode = "en"
     timestamp: str
+    message_metadata: dict | None = None
 
 
 class ConversationHistoryResponse(BaseModel):
@@ -125,6 +128,30 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
 
         safety = check_safety_rules(request.message)
         if not safety.get("safe", True):
+            if recommendation_service.is_self_harm_crisis(request.message):
+                crisis_reply = recommendation_service.maybe_build_response(
+                    message=request.message,
+                    history=[{"role": "user", "content": request.message}],
+                    language=selected_language,
+                )
+                crisis_text = str((crisis_reply or {}).get("text", "")).strip() or REFUSAL_MESSAGES[selected_language]
+                crisis_metadata = {"language": selected_language, **((crisis_reply or {}).get("metadata") or {})}
+                await add_message(
+                    conversation_id,
+                    "assistant",
+                    crisis_text,
+                    metadata=crisis_metadata,
+                )
+                conversation = await get_conversation(conversation_id, user_id)
+                return ChatResponse(
+                    response=crisis_text,
+                    conversation_id=conversation_id,
+                    conversation_title=conversation.get("title") if conversation else None,
+                    language=selected_language,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    message_metadata=crisis_metadata,
+                )
+
             refusal = REFUSAL_MESSAGES[selected_language]
             await add_message(
                 conversation_id,
@@ -144,30 +171,32 @@ async def chat(request: ChatRequest, current_user: dict = Depends(get_current_us
         history = await get_conversation_messages(conversation_id)
         history_for_agent = [{"role": m["role"], "content": m["content"]} for m in history]
 
-        response_text = await agent_service.process_message(
+        agent_reply = await agent_service.process_message(
             request.message,
             conversation_id,
             history_for_agent,
             language=selected_language,
         )
+        response_metadata = {"language": selected_language, **(agent_reply.metadata or {})}
         await add_message(
             conversation_id,
             "assistant",
-            response_text,
-            metadata={"language": selected_language},
+            agent_reply.text,
+            metadata=response_metadata,
         )
 
-        title = generate_title_from_response(response_text)
+        title = generate_title_from_response(agent_reply.text)
         if title:
             await set_conversation_title_if_empty(conversation_id, user_id, title)
 
         conversation = await get_conversation(conversation_id, user_id)
         return ChatResponse(
-            response=response_text,
+            response=agent_reply.text,
             conversation_id=conversation_id,
             conversation_title=conversation.get("title") if conversation else None,
             language=normalize_language(conversation.get("language") if conversation else selected_language),
             timestamp=datetime.now(timezone.utc).isoformat(),
+            message_metadata=response_metadata,
         )
     except HTTPException:
         raise

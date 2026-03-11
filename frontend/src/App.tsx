@@ -20,8 +20,10 @@ import {
 } from './api/queries'
 import { getLanguageLabel, t } from './i18n'
 import LandingPage from './LandingPage'
-import PolicyPage, { PolicyType } from './PolicyPage'
+import PolicyPage from './PolicyPage'
+import RecommendationCards from './RecommendationCards'
 import VoiceOrb from './VoiceOrb'
+import type { PolicyType } from './marketingContent'
 
 const LANGUAGE_STORAGE_KEY = 'ai_niru_language'
 const SKELETON_COUNT = 5
@@ -580,14 +582,25 @@ function App() {
     [conversationId, deleteMessageMutation, chatMutation, language]
   )
 
-  const handleGetStarted = () => {
+  const openAuthScreen = (mode: AuthMode) => {
+    resetAuthForm()
+    setAuthMode(mode)
     setScreen('auth')
+  }
+
+  const handleGetStarted = () => {
+    openAuthScreen('signup')
+  }
+
+  const handleOpenLogin = () => {
+    openAuthScreen('login')
   }
 
   if (screen === 'landing') {
     return (
       <LandingPage
         onGetStarted={handleGetStarted}
+        onLogin={handleOpenLogin}
         language={language}
         onLanguageChange={handleLanguageChange}
         onNavigate={(policy) => {
@@ -602,6 +615,8 @@ function App() {
     return (
       <PolicyPage
         onBack={() => setScreen('landing')}
+        onLogin={handleOpenLogin}
+        onNavigate={(policy) => setActivePolicy(policy)}
         language={language}
         onLanguageChange={handleLanguageChange}
         policyType={activePolicy}
@@ -963,7 +978,14 @@ function App() {
                     </div>
                   ) : (
                     <div className="message-content">
-                      {isAssistant ? <MarkdownContent content={message.content} /> : message.content}
+                      {isAssistant ? (
+                        <>
+                          <MarkdownContent content={message.content} />
+                          <RecommendationCards metadata={message.metadata} />
+                        </>
+                      ) : (
+                        message.content
+                      )}
                     </div>
                   )}
                 </div>

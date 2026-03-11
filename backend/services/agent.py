@@ -1,8 +1,9 @@
 """
-Agent service — calls LOCAL_MODEL_URL when configured, otherwise returns
+Agent service calls LOCAL_MODEL_URL when configured, otherwise returns
 a prompt to use voice mode (ElevenLabs Conversational AI).
 """
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -11,6 +12,7 @@ from backend.core.config import settings
 from backend.services.agent_prompts import build_system_prompt
 from backend.services.guardrails import check_guardrail
 from backend.services.rag import retrieve
+from backend.services.recommendations import recommendation_service
 from backend.services.swahili_quality import normalize_swahili_response, remove_english_words
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,13 @@ _UNAVAILABLE = {
     ),
 }
 
+
+@dataclass
+class AgentReply:
+    text: str
+    metadata: dict[str, Any] | None = None
+
+
 async def _chat_completion(messages: list[dict]) -> str | None:
     """Call the local model. Returns None if unavailable."""
     if not settings.LOCAL_MODEL_URL:
@@ -39,22 +48,22 @@ async def _chat_completion(messages: list[dict]) -> str | None:
     }
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
-            r = await client.post(
+            response = await client.post(
                 settings.LOCAL_MODEL_URL,
                 json=payload,
                 headers={"bypass-tunnel-reminder": "true"},
             )
-            r.raise_for_status()
-            data = r.json()
-    except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError) as e:
-        logger.warning("Local model request failed: %s", e)
+            response.raise_for_status()
+            data = response.json()
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError) as exc:
+        logger.warning("Local model request failed: %s", exc)
         return None
 
     if "content" in data:
         return (data["content"] or "").strip() or None
     if "choices" in data and data["choices"]:
-        msg = data["choices"][0].get("message") or {}
-        return (msg.get("content") or "").strip() or None
+        message = data["choices"][0].get("message") or {}
+        return (message.get("content") or "").strip() or None
     return None
 
 
@@ -107,10 +116,10 @@ async def _load_swahili_context(message: str) -> str:
 
 
 class AgentService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.initialized = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         self.initialized = True
 
     async def process_message(
@@ -119,13 +128,24 @@ class AgentService:
         conversation_id: str,
         history: list,
         language: str = "en",
-    ) -> str:
+    ) -> AgentReply:
         lang = "sw" if str(language).lower().startswith("sw") else "en"
         conversation_history = history or []
 
         should_redirect, redirect_msg = check_guardrail(message, lang)
         if should_redirect and redirect_msg:
-            return redirect_msg
+            return AgentReply(text=redirect_msg)
+
+        recommendation = recommendation_service.maybe_build_response(
+            message=message,
+            history=conversation_history,
+            language=lang,
+        )
+        if recommendation:
+            return AgentReply(
+                text=str(recommendation.get("text", "")).strip(),
+                metadata=recommendation.get("metadata"),
+            )
 
         if lang == "sw":
             return await self._process_swahili_message(message, conversation_history)
@@ -134,19 +154,19 @@ class AgentService:
         messages = _build_messages(system, conversation_history, message)
 
         response = await _chat_completion(messages)
-        return response if response else _UNAVAILABLE[lang]
+        return AgentReply(text=response if response else _UNAVAILABLE[lang])
 
-    async def _process_swahili_message(self, message: str, history: list[dict[str, Any]]) -> str:
+    async def _process_swahili_message(self, message: str, history: list[dict[str, Any]]) -> AgentReply:
         system = build_system_prompt(language="sw", include_rag=False)
         context_prompt = await _load_swahili_context(message)
         messages = _build_messages(system, history, message, context_prompt=context_prompt)
 
         draft = await _chat_completion(messages)
         if not draft:
-            return _UNAVAILABLE["sw"]
+            return AgentReply(text=_UNAVAILABLE["sw"])
 
         normalized = normalize_swahili_response(draft)
-        return remove_english_words(normalized) or normalized
+        return AgentReply(text=remove_english_words(normalized) or normalized)
 
 
 agent_service = AgentService()

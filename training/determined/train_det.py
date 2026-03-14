@@ -4,7 +4,7 @@ Determined AI training entrypoint for EM-NS LoRA fine-tuning.
 Uses Determined's DetCallback (HuggingFace Trainer integration) to report
 metrics, manage checkpoints, and coordinate with the ASHA searcher.
 
-Reuses helper functions from training/scripts/train_lora_chat.py.
+Reuses shared helper functions from training/scripts/utils/chat_training.py.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from training.scripts.train_lora_chat import (
+from training.scripts.utils.chat_training import (
     build_text_dataset,
     maybe_parse_messages,
     render_chat_text,
@@ -193,7 +193,7 @@ def main() -> None:
         logging_steps=20,
         save_steps=20,
         eval_steps=20,
-        eval_strategy="steps" if eval_ds is not None else "no",
+        evaluation_strategy="steps" if eval_ds is not None else "no",
         save_strategy="steps",
         bf16=(dtype == torch.bfloat16),
         fp16=(dtype == torch.float16),

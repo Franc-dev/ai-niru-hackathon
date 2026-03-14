@@ -121,6 +121,7 @@ async def get_conversation_messages(conversation_id: str) -> list[dict]:
             "role": doc["role"],
             "content": doc["content"],
             "timestamp": doc.get("timestamp").isoformat() if doc.get("timestamp") else None,
+            "metadata": doc.get("metadata") or {},
         })
     return messages
 

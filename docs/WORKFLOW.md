@@ -2,7 +2,7 @@
 
 ## Overview
 
-Elevana is a bilingual (Swahili/English) mental health chatbot that provides supportive responses based on a curated knowledge base. It uses **semantic similarity** (not generative AI) to ensure zero hallucinations.
+Elevana is a bilingual (Swahili/English) mental health chatbot that provides supportive responses based on a curated knowledge base. It uses **Hybrid - Pinecone and chroma - semantic similarity** (not generative AI) to ensure zero hallucinations.
 
 ## System Architecture
 

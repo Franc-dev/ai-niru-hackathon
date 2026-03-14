@@ -6,11 +6,38 @@ import { apiClient } from './client'
 
 export type LanguageCode = 'en' | 'sw'
 
+export interface RecommendationCard {
+  id: string
+  kind: 'resource' | 'counselor' | 'crisis'
+  title: string
+  subtitle?: string
+  description?: string
+  badges?: string[]
+  cta_label?: string
+  cta_href?: string
+  cta_kind?: 'external' | 'phone' | 'email' | string
+  secondary_cta_label?: string
+  secondary_cta_href?: string
+  secondary_cta_kind?: 'external' | 'phone' | 'email' | string
+  media_image?: string
+}
+
+export interface MessageMetadata {
+  language?: LanguageCode
+  safety_refusal?: boolean
+  ui_type?: 'recommendations' | string
+  recommendation_kind?: 'resources' | 'counselors' | 'crisis' | string
+  recommendation_topic?: string
+  recommendation_reason?: 'current_message' | 'history' | string
+  cards?: RecommendationCard[]
+}
+
 export interface ChatMessage {
   role: string
   content: string
   timestamp?: string
   message_id?: string
+  metadata?: MessageMetadata
 }
 
 export interface ChatRequest {
@@ -26,6 +53,7 @@ export interface ChatResponse {
   conversation_title?: string | null
   language?: LanguageCode
   timestamp: string
+  message_metadata?: MessageMetadata
 }
 
 export interface ConversationHistory {

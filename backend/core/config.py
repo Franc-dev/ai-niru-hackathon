@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     MONGODB_DB_NAME: str = "ai_niru"
 
     # CORS — supports JSON ["a","b"] or comma-separated "a,b"
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
@@ -73,6 +73,8 @@ class Settings(BaseSettings):
     CHROMA_PERSIST_DIR: str = "./chroma_data"
     RAG_COLLECTION_NAME: str = "rag_docs"
     RAG_TOP_K: int = 5
+    CHAT_MEMORY_TOP_K: int = 4
+    CHAT_MEMORY_MAX_CHARS: int = 900
 
     # ElevenLabs Voice
     ELEVENLABS_API_KEY: str = ""

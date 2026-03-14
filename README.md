@@ -46,7 +46,6 @@ ai-niru-hackathon/
 ├── frontend/         # React frontend
 ├── docs/            # Documentation
 └── tasks/           # Task tracking
-```
 
 ## Documentation
 

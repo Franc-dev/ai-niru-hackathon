@@ -1,4 +1,4 @@
-# Deploy EM-NS Model Server to Lightning.ai (Free GPU)
+# Deploy MentalChat-16K to Lightning.ai (Free GPU)
 
 ## Why Lightning.ai?
 - **Free T4 GPU** (22 GPU-hours/month on free plan)
@@ -12,7 +12,7 @@
 1. Go to [lightning.ai](https://lightning.ai) and sign up (free, use GitHub login)
 2. Click **"Studios"** → **"New Studio"**
 3. Configure:
-   - **Name:** `emns-model-server`
+   - **Name:** `mentalchat-16k`
    - **Teamspace:** Default or personal
    - **Machine:** Select **GPU** → **T4** (free tier)
 4. Click **"Start"** — it takes ~1 min to boot
@@ -21,24 +21,24 @@
 Once the Studio terminal is open, run:
 
 ```bash
-# Download and run the setup script
-curl -sL https://raw.githubusercontent.com/Franc-dev/ai-niru-hackathon/feat/emns-training-workflow/deploy/lightning/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/Franc-dev/ai-niru-hackathon/main/deploy/lightning/setup.sh | bash
 ```
 
 Or manually:
 ```bash
 git clone https://github.com/Franc-dev/ai-niru-hackathon.git
 cd ai-niru-hackathon
-pip install torch transformers peft accelerate fastapi "uvicorn[standard]" httpx pydantic
-python training/scripts/serve_model.py --port 8001
+pip install -r deploy/lightning/requirements.txt
+python training/scripts/serve_local_model.py --port 8002
 ```
 
+*(MentalChat-16K downloads from Hugging Face on first run.)*
+
 ### 3. Expose the Port
-Lightning Studios can expose ports publicly:
 1. In the Studio, click the **"Ports"** tab (bottom panel)
-2. Add port **8001**
+2. Add port **8002**
 3. Toggle **"Public"** to ON
-4. Copy the generated **public URL** (looks like `https://xxxxxx.lightning.ai`)
+4. Copy the generated **public URL** (e.g. `https://xxxxxx-8002.lightning.ai`)
 
 ### 4. Test the Endpoint
 ```bash
@@ -48,23 +48,22 @@ curl -X POST https://<YOUR_STUDIO_URL>/v1/chat \
 ```
 
 ### 5. Connect Your Backend
-Update your backend `.env` file:
+Update your backend `.env`:
 
 ```env
 LOCAL_MODEL_URL=https://<YOUR_STUDIO_URL>/v1/chat
 LOCAL_EMBEDDING_URL=https://<YOUR_STUDIO_URL>/v1/embeddings
 ```
 
-Then restart your backend. Your UI will now use the GPU-powered model!
+Then restart your backend.
 
-## Performance Comparison
+## Performance
 
 | Setup        | Response Time | Cost   |
 |-------------|--------------|--------|
-| Local CPU    | 3-5 minutes  | Free   |
-| Lightning T4 | 2-5 seconds  | Free (22 hrs/month) |
+| Local CPU   | 30–60+ sec   | Free   |
+| Lightning T4| 2–5 sec      | Free (22 hrs/month) |
 
 ## Tips
-- **Save GPU hours:** Stop the Studio when not in use (click "Stop")
-- **Keep it running:** During demos/hackathon, leave the Studio active
-- **Monitor usage:** Check your GPU hours in Settings → Billing
+- **Save GPU hours:** Stop the Studio when not in use
+- **Monitor usage:** Settings → Billing

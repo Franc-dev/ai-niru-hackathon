@@ -1,0 +1,102 @@
+[
+    {
+      "name": "Kenya Red Cross Mental Health Hotline",
+      "type": "crisis_hotline",
+      "country": "Kenya",
+      "phone": "1190",
+      "availability": "24/7",
+      "languages": ["English", "Swahili"],
+      "description": "Free confidential support for emotional distress and mental health crises",
+      "organization": "Kenya Red Cross"
+    },
+    {
+      "name": "Befrienders Kenya",
+      "type": "suicide_prevention_hotline",
+      "country": "Kenya",
+      "phone": "+254722178177",
+      "availability": "24/7",
+      "languages": ["English", "Swahili"],
+      "description": "Confidential emotional support and suicide prevention hotline",
+      "organization": "Befrienders Kenya"
+    },
+    {
+      "name": "Childline Kenya",
+      "type": "youth_crisis_hotline",
+      "country": "Kenya",
+      "phone": "0800221234",
+      "availability": "24/7",
+      "languages": ["English", "Swahili"],
+      "description": "Support line for children and young people facing abuse, distress, or crisis",
+      "organization": "Childline Kenya"
+    },
+    {
+      "name": "Ushauri HIV & Mental Health Helpline",
+      "type": "health_support_hotline",
+      "country": "Kenya",
+      "phone": "0800724848",
+      "availability": "24/7",
+      "languages": ["English", "Swahili"],
+      "description": "Provides counseling and mental health support related to HIV and emotional distress",
+      "organization": "NASCOP Kenya"
+    },
+    {
+      "name": "Kenyatta National Hospital Mental Health Department",
+      "type": "hospital_crisis_line",
+      "country": "Kenya",
+      "phone": "+254203000378",
+      "availability": "24/7",
+      "languages": ["English", "Swahili"],
+      "description": "Mental health crisis assistance and psychiatric emergency support",
+      "organization": "Kenyatta National Hospital"
+    },
+    {
+      "name": "988 Suicide & Crisis Lifeline",
+      "type": "suicide_prevention_hotline",
+      "country": "United States",
+      "phone": "988",
+      "availability": "24/7",
+      "languages": ["English", "Spanish"],
+      "description": "Free and confidential emotional support for people in suicidal crisis or emotional distress",
+      "organization": "U.S. National Suicide Prevention Lifeline"
+    },
+    {
+      "name": "Samaritans",
+      "type": "suicide_prevention_hotline",
+      "country": "United Kingdom",
+      "phone": "116123",
+      "availability": "24/7",
+      "languages": ["English"],
+      "description": "Confidential emotional support for anyone in distress or suicidal crisis",
+      "organization": "Samaritans UK"
+    },
+    {
+      "name": "Crisis Text Line",
+      "type": "text_crisis_support",
+      "country": "United States",
+      "phone": "Text HOME to 741741",
+      "availability": "24/7",
+      "languages": ["English"],
+      "description": "Free crisis counseling via text message",
+      "organization": "Crisis Text Line"
+    },
+    {
+      "name": "Lifeline Australia",
+      "type": "suicide_prevention_hotline",
+      "country": "Australia",
+      "phone": "131114",
+      "availability": "24/7",
+      "languages": ["English"],
+      "description": "24/7 crisis support and suicide prevention service",
+      "organization": "Lifeline Australia"
+    },
+    {
+      "name": "Find A Helpline",
+      "type": "global_directory",
+      "country": "Global",
+      "website": "https://findahelpline.com",
+      "availability": "24/7 directory",
+      "languages": ["Multiple"],
+      "description": "Global directory connecting people to verified crisis and mental health helplines in over 150 countries",
+      "organization": "International Association for Suicide Prevention"
+    }
+  ]

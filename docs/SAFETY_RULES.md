@@ -1,7 +1,7 @@
-# AI NirU - Safety Rules & Crisis Protocols
+# Elevana - Safety Rules & Crisis Protocols
 
 ## 1. Overview
-Safety is the foundational principle of AI NirU. We employ a layered approach to safety that includes hardcoded crisis filters, semantic guardrails, and mission-specific agent prompts.
+Safety is the foundational principle of Elevana. We employ a layered approach to safety that includes hardcoded crisis filters, semantic guardrails, and mission-specific agent prompts.
 
 ## 2. Crisis Detection Protocol (High Priority)
 The Crisis Detection Tool (`4_serve_sklearn_rag.py`) is the most critical safety layer. It is executed **first** for every incoming chat message.
@@ -24,7 +24,7 @@ When a crisis keyword is detected:
 The Guardrails service (`backend/services/guardrails.py`) prevents the model from being misused for non-mental health purposes.
 
 ### 3.1 Monitored Topics
-The system automatically identifies and redirects users who try to use AI NirU for:
+The system automatically identifies and redirects users who try to use Elevana for:
 - Programming/Coding (Python, Java, Javascript).
 - Math, Physics, or Homework help.
 - General web search topics (Weather, Stock prices, Cooking recipes).

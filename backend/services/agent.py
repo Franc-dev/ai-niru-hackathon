@@ -11,20 +11,20 @@ import httpx
 from backend.core.config import settings
 from backend.services.agent_prompts import build_system_prompt
 from backend.services.guardrails import check_guardrail
+from backend.services.intent_router import route_message
 from backend.services.rag import retrieve
-from backend.services.recommendations import recommendation_service
 from backend.services.swahili_quality import normalize_swahili_response, remove_english_words
 
 logger = logging.getLogger(__name__)
 
 _UNAVAILABLE = {
     "en": (
-        "Hi! I'm Elevana. For the best real-time experience, please tap the "
-        "microphone button to talk with me via voice."
+        "I'm here with you. I couldn't reach the support model just now, but you can "
+        "tell me a little more about what feels hardest and I will keep helping within my scope."
     ),
     "sw": (
-        "Habari! Mimi ni Elevana. Kwa uzoefu bora, tafadhali bonyeza kitufe cha "
-        "kipaza sauti ili kuzungumza nami kwa wakati halisi."
+        "Niko hapa pamoja nawe. Kwa sasa siwezi kufikia modeli ya msaada, lakini "
+        "unaweza kuniambia kinachokusumbua zaidi nami nitaendelea kusaidia ndani ya uwezo wangu."
     ),
 }
 
@@ -33,6 +33,11 @@ _UNAVAILABLE = {
 class AgentReply:
     text: str
     metadata: dict[str, Any] | None = None
+
+
+def _is_gradio_space(url: str) -> bool:
+    """Detect Hugging Face Gradio Space (ZeroGPU, etc.)."""
+    return ".hf.space" in (url or "")
 
 
 async def _chat_completion(messages: list[dict]) -> str | None:
@@ -46,10 +51,16 @@ async def _chat_completion(messages: list[dict]) -> str | None:
         "top_p": 1.0,
         "repetition_penalty": 1.08,
     }
+    url = settings.LOCAL_MODEL_URL
+    if _is_gradio_space(url):
+        # Gradio Space (ZeroGPU): use /api/predict, fn_index=1 for api_chat
+        base = url.split("/v1/chat")[0].split("/post/")[0].rstrip("/")
+        url = f"{base}/api/predict"
+        payload = {"fn_index": 1, "data": [payload]}
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             response = await client.post(
-                settings.LOCAL_MODEL_URL,
+                url,
                 json=payload,
                 headers={"bypass-tunnel-reminder": "true"},
             )
@@ -59,11 +70,15 @@ async def _chat_completion(messages: list[dict]) -> str | None:
         logger.warning("Local model request failed: %s", exc)
         return None
 
+    # Gradio /api/predict returns {"data": [result]}
+    if isinstance(data, dict) and "data" in data and data["data"]:
+        first = data["data"][0]
+        data = first if isinstance(first, dict) else data
     if "content" in data:
         return (data["content"] or "").strip() or None
     if "choices" in data and data["choices"]:
-        message = data["choices"][0].get("message") or {}
-        return (message.get("content") or "").strip() or None
+        msg = data["choices"][0].get("message") or {}
+        return (msg.get("content") or "").strip() or None
     return None
 
 
@@ -71,11 +86,12 @@ def _build_messages(
     system_prompt: str,
     history: list[dict[str, Any]],
     message: str,
-    context_prompt: str = "",
+    context_prompts: list[str] | None = None,
 ) -> list[dict[str, str]]:
     messages = [{"role": "system", "content": system_prompt}]
-    if context_prompt:
-        messages.append({"role": "system", "content": context_prompt})
+    for prompt in context_prompts or []:
+        if prompt:
+            messages.append({"role": "system", "content": prompt})
 
     for turn in history[-12:]:
         role = turn.get("role", "user")
@@ -136,30 +152,46 @@ class AgentService:
         if should_redirect and redirect_msg:
             return AgentReply(text=redirect_msg)
 
-        recommendation = recommendation_service.maybe_build_response(
+        route = route_message(
             message=message,
             history=conversation_history,
             language=lang,
         )
-        if recommendation:
+
+        if route.recommendation:
             return AgentReply(
-                text=str(recommendation.get("text", "")).strip(),
-                metadata=recommendation.get("metadata"),
+                text=str(route.recommendation.get("text", "")).strip(),
+                metadata=route.recommendation.get("metadata"),
             )
 
         if lang == "sw":
-            return await self._process_swahili_message(message, conversation_history)
+            return await self._process_swahili_message(message, conversation_history, route.prompt_context)
 
         system = build_system_prompt(language=lang, include_rag=False)
-        messages = _build_messages(system, conversation_history, message)
+        messages = _build_messages(
+            system,
+            conversation_history,
+            message,
+            context_prompts=[route.prompt_context],
+        )
 
         response = await _chat_completion(messages)
         return AgentReply(text=response if response else _UNAVAILABLE[lang])
 
-    async def _process_swahili_message(self, message: str, history: list[dict[str, Any]]) -> AgentReply:
+    async def _process_swahili_message(
+        self,
+        message: str,
+        history: list[dict[str, Any]],
+        route_prompt: str,
+    ) -> AgentReply:
         system = build_system_prompt(language="sw", include_rag=False)
-        context_prompt = await _load_swahili_context(message)
-        messages = _build_messages(system, history, message, context_prompt=context_prompt)
+        rag_prompt = await _load_swahili_context(message)
+        messages = _build_messages(
+            system,
+            history,
+            message,
+            context_prompts=[route_prompt, rag_prompt],
+        )
 
         draft = await _chat_completion(messages)
         if not draft:

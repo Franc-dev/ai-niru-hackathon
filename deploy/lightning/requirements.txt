@@ -1,8 +1,6 @@
 torch
 transformers
-peft
 accelerate
+sentence-transformers
 fastapi
 uvicorn[standard]
-httpx
-pydantic

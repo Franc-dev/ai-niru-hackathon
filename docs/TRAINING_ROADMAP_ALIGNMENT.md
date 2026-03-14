@@ -13,11 +13,11 @@ This maps the technical roadmap training requirements to repo implementation.
 - Implemented by `training/scripts/train_lora_chat.py` with configurable base model.
 - Default: `Qwen/Qwen2.5-1.5B-Instruct`.
 
-2. Stage 2: Domain Adaptation (Bilingual + Kenyan context)
-- Implemented by `training/scripts/build_mentalchat_bilingual.py`.
+2. Stage 2: Domain Adaptation (English SFT data pipeline today)
+- Implemented by `training/scripts/build_english_sft_dataset.py`.
 - Data source: `ShenLab/MentalChat16K`.
-- Generates English + translated Swahili records in a shared schema.
-- Ready to merge clinician-reviewed Kenyan Swahili/code-switch data in same format.
+- Generates train/val/test JSONL files plus a manifest in `data/training/`.
+- Ready to expand into clinician-reviewed Kenyan Swahili/code-switch data in the same schema later.
 
 3. Stage 3: Safety-Centered Instruction Tuning
 - Training dataset includes risk tier metadata (`crisis`, `distress`, `seeking_information`).
@@ -40,8 +40,8 @@ This maps the technical roadmap training requirements to repo implementation.
 
 ## Operational Governance Hooks
 
-- Data provenance stored per record (`source_dataset`, `translation` metadata).
+- Data provenance stored per record (`source_dataset` metadata).
 - Manifest output with counts and split details:
-  - `data/training/mentalchat_bilingual_manifest.json`
+  - `data/training/mentalchat16k_en_manifest.json`
 - Model artifact versioning path:
   - `training/artifacts/<version-name>/`

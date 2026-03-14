@@ -67,3 +67,4 @@ training/artifacts/
 training/reports/
 data/training/
 !data/training/.gitkeep
+unsloth_compiled_cache/

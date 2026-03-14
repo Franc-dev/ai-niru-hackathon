@@ -1,10 +1,10 @@
-# EMNS Training Workflow
+# EMNS Qwen Training Workflow
 
-This workflow is aligned to the EMNS roadmap:
-- Chat-only model training (no voice model training).
-- Bilingual English + Swahili data.
-- Safety-centered evaluation before release.
-- Local serving endpoint compatible with backend (`/v1/chat`, `/v1/embeddings`).
+This training path uses a plain Hugging Face LoRA stack:
+- MentalChat16K as the base English corpus
+- Qwen 2.5 Instruct chat template
+- `transformers` + `peft` LoRA fine-tuning
+- local FastAPI serving with `/v1/chat` and `/v1/embeddings`
 
 ## 1) Environment
 
@@ -14,100 +14,67 @@ python -m venv .venv
 pip install -r training/requirements.txt
 ```
 
-## 2) Build Bilingual Dataset (MentalChat16K -> English+Kiswahili)
-
-Full dataset:
+## 2) Build English MentalChat16K Dataset
 
 ```bash
-python training/scripts/build_mentalchat_bilingual.py
-```
-
-Quick start (first 200 rows):
-
-```bash
-python training/scripts/build_mentalchat_bilingual.py --limit 200
-```
-
-Offline/reproducible translation (Marian):
-
-```bash
-python training/scripts/build_mentalchat_bilingual.py --translate-backend marian
+python training/scripts/build_english_sft_dataset.py
 ```
 
 Outputs:
-- `data/training/mentalchat_bilingual_all.jsonl`
-- `data/training/mentalchat_bilingual_train.jsonl`
-- `data/training/mentalchat_bilingual_val.jsonl`
-- `data/training/mentalchat_bilingual_test.jsonl`
-- `data/training/mentalchat_bilingual_manifest.json`
+- `data/training/mentalchat16k_en_all.jsonl`
+- `data/training/mentalchat16k_en_train.jsonl`
+- `data/training/mentalchat16k_en_val.jsonl`
+- `data/training/mentalchat16k_en_test.jsonl`
+- `data/training/mentalchat16k_en_manifest.json`
 
-## 2b) Merge Kenyan Localized Data
-
-Template file:
-- `training/templates/kenyan_localized_template.jsonl`
-
-Merge command:
-
-```bash
-python training/scripts/merge_localized_data.py
-```
-
-## 3) Train LoRA Chat Model
+## 3) Fine-Tune Qwen 2.5 1.5B
 
 ```bash
 python training/scripts/train_lora_chat.py ^
   --base-model Qwen/Qwen2.5-1.5B-Instruct ^
-  --train-file data/training/mentalchat_bilingual_train.jsonl ^
-  --eval-file data/training/mentalchat_bilingual_val.jsonl ^
-  --output-dir training/artifacts/emns-chat-lora-v1
+  --train-file data/training/mentalchat16k_en_train.jsonl ^
+  --eval-file data/training/mentalchat16k_en_val.jsonl ^
+  --output-dir training/artifacts/emns-qwen25-en-v1
 ```
 
-Notes:
-- On Windows, run with `--no-4bit` if bitsandbytes is unavailable.
-- For low VRAM, reduce `--batch-size` and increase `--grad-accum`.
+Training details:
+- Qwen 2.5 instruct base model
+- LoRA on language/attention/MLP modules
+- assistant-response-only supervision
+- portable `transformers` + `peft` serving artifacts
 
-## 4) Serve Model Locally
-
-Base model only:
-
-```bash
-python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-1.5B-Instruct --port 8001
-```
-
-Base + LoRA adapter:
+## 4) Serve the Fine-Tuned Model on Port 8002
 
 ```bash
 python training/scripts/serve_local_model.py ^
   --model-id Qwen/Qwen2.5-1.5B-Instruct ^
-  --adapter-path training/artifacts/emns-chat-lora-v1 ^
-  --port 8001
+  --adapter-path training/artifacts/emns-qwen25-en-v1 ^
+  --port 8002
 ```
 
 ## 5) Red-Team Safety Check
 
 ```bash
-python training/scripts/run_red_team_eval.py --server-url http://localhost:8001
+python training/scripts/run_red_team_eval.py --server-url http://localhost:8002
 ```
 
 Output:
 - `training/reports/red_team_report.json`
 
-## 6) Connect to Existing Backend
+## 6) Connect to the Existing Backend
 
-The backend already expects these URLs in `backend/.env`:
+Set these values in `backend/.env`:
 
 ```env
-LOCAL_MODEL_URL=http://localhost:8001/v1/chat
-LOCAL_EMBEDDING_URL=http://localhost:8001/v1/embeddings
+LOCAL_MODEL_URL=http://localhost:8002/v1/chat
+LOCAL_EMBEDDING_URL=http://localhost:8002/v1/embeddings
 ```
 
-No code changes are required in `backend/services/agent.py` or `backend/services/embeddings.py`.
-
-End-to-end run sequence:
+## 7) End-to-End Run
 
 ```bash
 # terminal 1
-python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-1.5B-Instruct --adapter-path training/artifacts/emns-chat-lora-v1 --port 8001
+python training/scripts/serve_local_model.py --model-id Qwen/Qwen2.5-1.5B-Instruct --adapter-path training/artifacts/emns-qwen25-en-v1 --port 8002
 
 # terminal 2
 cd backend
@@ -118,8 +85,8 @@ cd frontend
 npm run dev
 ```
 
-## 7) Recommended Next Dataset Step (Kenyan Localization)
+## Notes
 
-Add a second dataset file with clinician-reviewed Kenyan Swahili/code-switch samples, then merge into the same JSONL format before training.
-
-Used qwen 1.5 instruct. - deploy model using hugging inference 
+- V1 is English-only fine-tuning.
+- Counselor, resource, crisis, safety, and memory routing remain deterministic in the backend.
+- Swahili generation or translation is a later phase.

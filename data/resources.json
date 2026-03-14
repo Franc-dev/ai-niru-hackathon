@@ -4,7 +4,7 @@
     "type": "video",
     "language": "English",
     "category": "depression",
-    "description": "An animated explanation of depression — symptoms, brain changes, and treatments — from a psychiatrist and TED-Ed educator",
+    "description": "Animated explanation of depression, symptoms, and treatment options",
     "url": "https://www.youtube.com/watch?v=z-IR48Mb3W0",
     "duration": "4 min",
     "source": "YouTube"
@@ -14,7 +14,7 @@
     "type": "video",
     "language": "English",
     "category": "depression",
-    "description": "A 19-year-old comedian shares his own battle with depression in a powerful, personal TEDx Talk",
+    "description": "A comedian shares his hidden struggle with depression",
     "url": "https://www.youtube.com/watch?v=VYs05qPycYQ",
     "duration": "11 min",
     "source": "YouTube"
@@ -23,19 +23,19 @@
     "title": "Why We All Need to Practice Emotional First Aid - Guy Winch (TED)",
     "type": "video",
     "language": "English",
-    "category": "anxiety",
-    "description": "Psychologist Guy Winch makes the case for treating emotional pain — loneliness, failure, rejection — with the same care we give physical injuries",
+    "category": "mental_health_basics",
+    "description": "Psychologist Guy Winch explains how emotional wounds should be treated like physical injuries",
     "url": "https://www.youtube.com/watch?v=F2hc2FLOdhI",
     "duration": "17 min",
     "source": "YouTube"
   },
   {
-    "title": "Depression, The Secret We Share - Andrew Solomon (TED)",
+    "title": "Depression, The Secret We Share - Andrew Solomon (TEDxMet)",
     "type": "video",
     "language": "English",
     "category": "depression",
-    "description": "Writer Andrew Solomon shares his personal journey through depression and interviews with others around the world",
-    "url": "https://www.youtube.com/watch?v=rb5oOJyMoWo",
+    "description": "Writer Andrew Solomon discusses his personal journey with depression",
+    "url": "https://www.youtube.com/watch?v=dBYUn-FEscc",
     "duration": "29 min",
     "source": "YouTube"
   },
@@ -44,7 +44,7 @@
     "type": "video",
     "language": "English",
     "category": "mental_health_basics",
-    "description": "An African entrepreneur challenges the stigma around mental health and shares his own experience with anxiety",
+    "description": "African entrepreneur challenges stigma around mental health",
     "url": "https://www.youtube.com/watch?v=MwEATgtMBMg",
     "duration": "9 min",
     "source": "YouTube"
@@ -54,7 +54,7 @@
     "type": "video",
     "language": "English",
     "category": "grief",
-    "description": "Practical, science-backed advice for recovering from heartbreak and loss",
+    "description": "Science-backed strategies to recover from heartbreak",
     "url": "https://www.youtube.com/watch?v=k0GQSJrpVhM",
     "duration": "12 min",
     "source": "YouTube"
@@ -64,7 +64,7 @@
     "type": "video",
     "language": "English",
     "category": "self-esteem",
-    "description": "Psychologist Susan David explains how facing difficult emotions with courage builds resilience and authentic wellbeing",
+    "description": "Facing emotions instead of avoiding them builds resilience",
     "url": "https://www.youtube.com/watch?v=NDQ1Mi5I4rg",
     "duration": "16 min",
     "source": "YouTube"
@@ -74,7 +74,7 @@
     "type": "video",
     "language": "English",
     "category": "stress",
-    "description": "A health psychologist reframes stress as something that can make you stronger, not just harmful",
+    "description": "How your mindset about stress can improve health",
     "url": "https://www.youtube.com/watch?v=RcGyVTAoXEU",
     "duration": "14 min",
     "source": "YouTube"
@@ -84,17 +84,17 @@
     "type": "video",
     "language": "English",
     "category": "relationships",
-    "description": "Researcher Brené Brown explores the connection between vulnerability, belonging, and meaningful relationships",
+    "description": "How vulnerability creates meaningful connections",
     "url": "https://www.youtube.com/watch?v=iCvmsMzlF7o",
     "duration": "20 min",
     "source": "YouTube"
   },
   {
-    "title": "Loneliness: The Silent Epidemic - Don't Suffer Alone - Nikki Webber Allen (TED)",
+    "title": "Loneliness: The Silent Epidemic - Nikki Webber Allen (TED)",
     "type": "video",
     "language": "English",
     "category": "loneliness",
-    "description": "Filmmaker Nikki Webber Allen opens up about anxiety and depression and why Black communities must talk about mental health",
+    "description": "A talk about loneliness, anxiety and community stigma",
     "url": "https://www.youtube.com/watch?v=4pRMBDiK-Aw",
     "duration": "6 min",
     "source": "YouTube"
@@ -104,59 +104,69 @@
     "type": "video",
     "language": "English",
     "category": "sleep",
-    "description": "Sleep scientist Matt Walker explains why sleep is the single most effective thing you can do to reset your brain and body",
+    "description": "Sleep scientist explains why sleep is essential for brain health",
     "url": "https://www.youtube.com/watch?v=5MuIMqhT8DM",
     "duration": "19 min",
     "source": "YouTube"
   },
   {
-    "title": "Mindfulness for Beginners - What is Mindfulness? (Headspace animated)",
+    "title": "Mindfulness for Beginners - Headspace",
     "type": "video",
     "language": "English",
     "category": "mindfulness",
-    "description": "Headspace's animated guide to what mindfulness is and how to get started with a daily practice",
+    "description": "Short animated introduction to mindfulness",
     "url": "https://www.youtube.com/watch?v=qzR62JJCMBQ",
     "duration": "3 min",
     "source": "YouTube"
   },
   {
-    "title": "Meditation for Beginners - Guided Session (Great Meditation)",
+    "title": "Guided Meditation for Beginners",
     "type": "video",
     "language": "English",
     "category": "meditation",
-    "description": "A beginner-friendly guided meditation to help you start a simple, calm daily practice",
+    "description": "Beginner-friendly guided meditation session",
     "url": "https://www.youtube.com/watch?v=U9YKY7fdwyg",
     "duration": "10 min",
     "source": "YouTube"
   },
   {
-    "title": "How Childhood Trauma Affects Health Across a Lifetime - Nadine Burke Harris (TED)",
+    "title": "How Childhood Trauma Affects Health - Nadine Burke Harris (TED)",
     "type": "video",
     "language": "English",
     "category": "trauma",
-    "description": "Pediatrician Nadine Burke Harris explains how adverse childhood experiences affect long-term mental and physical health",
+    "description": "How adverse childhood experiences impact long-term health",
     "url": "https://www.youtube.com/watch?v=95ovIJ3dsNk",
     "duration": "16 min",
     "source": "YouTube"
   },
   {
-    "title": "Work-Life Balance Tips",
+    "title": "Burnout Prevention and Recovery",
     "type": "article",
     "language": "English",
     "category": "stress",
-    "description": "How to balance work and personal life for better mental wellness",
+    "description": "How to recover from burnout and chronic stress",
     "url": "https://www.helpguide.org/mental-health/stress/burnout-prevention-and-recovery",
     "duration": "5 min read",
-    "source": "Article"
+    "source": "HelpGuide"
   },
   {
-    "title": "Self-Help Techniques for Mental Wellness",
+    "title": "Mental Health: Strengthening Our Response",
+    "type": "article",
+    "language": "English",
+    "category": "mental_health_basics",
+    "description": "WHO overview of global mental health",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+    "duration": "6 min read",
+    "source": "WHO"
+  },
+  {
+    "title": "Improving Mental Wellbeing",
     "type": "article",
     "language": "English",
     "category": "self_help",
-    "description": "Evidence-based self-help strategies for improving mental health and well-being",
+    "description": "Evidence-based strategies to improve wellbeing",
     "url": "https://www.mind.org.uk/information-support/tips-for-everyday-living/wellbeing/wellbeing/",
     "duration": "8 min read",
-    "source": "Article"
+    "source": "Mind UK"
   }
 ]

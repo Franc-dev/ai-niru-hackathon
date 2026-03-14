@@ -71,6 +71,18 @@ TOPIC_KEYWORDS: dict[str, tuple[str, ...]] = {
         "mental health", "mental wellness", "wellbeing", "emotional help",
         "afya ya akili", "ustawi wa akili",
     ),
+    "mindfulness": (
+        "mindfulness", "mindful", "present", "awareness",
+        "ufahamu", "uwepo",
+    ),
+    "meditation": (
+        "meditation", "meditate", "breathing", "calm",
+        "fomoyo", "kupumua", "utulivu",
+    ),
+    "self_help": (
+        "self help", "self-help", "coping", "strategies", "tips",
+        "kujisaidia", "mbinu", "njia",
+    ),
 }
 
 RELATED_TOPICS: dict[str, tuple[str, ...]] = {
@@ -82,6 +94,10 @@ RELATED_TOPICS: dict[str, tuple[str, ...]] = {
     "sleep": ("stress", "anxiety", "meditation"),
     "self-esteem": ("self_help", "mindfulness"),
     "trauma": ("anxiety",),
+    "addiction": ("self_help", "mental_health_basics"),
+    "mindfulness": ("meditation", "self_help", "stress"),
+    "meditation": ("mindfulness", "sleep", "self_help"),
+    "self_help": ("mental_health_basics", "mindfulness"),
 }
 
 RESOURCE_TERMS = (
@@ -140,6 +156,7 @@ class RecommendationService:
     def __init__(self) -> None:
         self.resources = _load_dataset("resources.json")
         self.counselors = _load_dataset("counselors.json")
+        self.crisis_hotlines = _load_dataset("crisis.json")
 
     def _detect_recommendation_kind(self, current_text: str, all_text: str) -> str | None:
         if _contains_any(current_text, CRISIS_TERMS) or _contains_any(all_text, CRISIS_TERMS):
@@ -164,7 +181,8 @@ class RecommendationService:
                     scores[topic] = scores.get(topic, 0.0) + (matches * weight)
         return scores
 
-    def _infer_topic(self, message: str, history: list[dict[str, Any]]) -> tuple[str, bool]:
+    def _infer_topic(self, message: str, history: list[dict[str, Any]]) -> tuple[str, bool, bool]:
+        """Return (topic, inferred_from_history, used_default). used_default=True when no keywords matched."""
         user_turns = _history_user_turns(history)
         combined_turns = user_turns[-5:]
         if not combined_turns or combined_turns[-1] != message:
@@ -175,9 +193,9 @@ class RecommendationService:
             topic = max(scores.items(), key=lambda item: item[1])[0]
             current_only_scores = self._topic_scores([message])
             inferred_from_history = topic not in current_only_scores
-            return topic, inferred_from_history
+            return topic, inferred_from_history, False
 
-        return "mental_health_basics", False
+        return "mental_health_basics", False, True
 
     def is_self_harm_crisis(self, message: str) -> bool:
         return _contains_any(_normalize(message), CRISIS_TERMS)
@@ -195,14 +213,27 @@ class RecommendationService:
         if not kind:
             return None
 
-        topic, used_history = self._infer_topic(message, history)
+        topic, used_history, used_default_topic = self._infer_topic(message, history)
         if kind == "crisis":
             return self._build_crisis_response(language, topic)
         if kind == "counselors":
-            return self._build_counselor_response(language, topic, used_history)
-        return self._build_resource_response(language, topic, used_history)
+            has_match, candidates = self._has_counselor_match(topic, language, used_default_topic)
+            if not has_match:
+                return None
+            return self._build_counselor_response(language, topic, used_history, candidates)
+        if kind == "resources":
+            has_match, candidates = self._has_resource_match(topic, used_default_topic)
+            if not has_match:
+                return None
+            return self._build_resource_response(language, topic, used_history, candidates)
+        return None
 
-    def _resource_candidates(self, topic: str) -> list[dict[str, Any]]:
+    RESOURCE_FALLBACK_CATEGORIES = frozenset({"mental_health_basics", "self_help", "mindfulness"})
+    RESOURCE_MIN_SCORE = 1.0
+    COUNSELOR_MIN_SCORE = 2.0
+
+    def _resource_candidates(self, topic: str) -> tuple[list[dict[str, Any]], bool]:
+        """Return (candidates, used_fallback). used_fallback=True when only generic fallback matched."""
         related = {topic, *RELATED_TOPICS.get(topic, ())}
         ranked: list[tuple[float, dict[str, Any]]] = []
 
@@ -231,18 +262,34 @@ class RecommendationService:
                 ranked.append((score, item))
 
         ranked.sort(key=lambda item: (-item[0], item[1].get("title", "")))
-        selected = [item for _, item in ranked[:4]]
-        if selected:
-            return selected
+        topic_matched = [item for s, item in ranked[:4] if s >= self.RESOURCE_MIN_SCORE]
+        if topic_matched:
+            return (topic_matched[:4], False)
 
-        fallback_categories = {"mental_health_basics", "self_help", "mindfulness"}
         fallback = [
             item for item in self.resources
-            if str(item.get("category", "")).strip().lower() in fallback_categories
+            if str(item.get("category", "")).strip().lower() in self.RESOURCE_FALLBACK_CATEGORIES
         ]
-        return fallback[:4]
+        return (fallback[:4], True)
 
-    def _counselor_candidates(self, topic: str, language: str) -> list[dict[str, Any]]:
+    def _has_resource_match(
+        self, topic: str, used_default_topic: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Return (has_match, candidates). No match when only fallback and topic not in fallback set.
+        When used_default_topic=True (e.g. user said 'OCD'), never return - we didn't understand the request."""
+        if used_default_topic:
+            return (False, [])
+        candidates, used_fallback = self._resource_candidates(topic)
+        if not candidates:
+            return (False, [])
+        if not used_fallback:
+            return (True, candidates)
+        if topic in self.RESOURCE_FALLBACK_CATEGORIES:
+            return (True, candidates)
+        return (False, [])
+
+    def _counselor_candidates(self, topic: str, language: str) -> tuple[list[dict[str, Any]], bool]:
+        """Return (candidates, used_fallback). used_fallback=True when only generic counselors matched."""
         lang_label = "swahili" if language == "sw" else "english"
         ranked: list[tuple[float, dict[str, Any]]] = []
 
@@ -271,20 +318,36 @@ class RecommendationService:
                 ranked.append((score, item))
 
         ranked.sort(key=lambda item: (-item[0], -float(item[1].get("rating", 0) or 0), item[1].get("name", "")))
-        selected = [item for _, item in ranked[:4]]
-        if selected:
-            return selected
+        topic_matched = [item for s, item in ranked[:4] if s >= self.COUNSELOR_MIN_SCORE]
+        if topic_matched:
+            return (topic_matched[:4], False)
 
         fallback = [
             item for item in self.counselors
             if "crisis" not in _normalize(str(item.get("specialization", "")))
         ]
         fallback.sort(key=lambda item: (-float(item.get("rating", 0) or 0), item.get("name", "")))
-        return fallback[:4]
+        return (fallback[:4], True)
 
-    def _build_resource_response(self, language: str, topic: str, used_history: bool) -> dict[str, Any]:
+    def _has_counselor_match(
+        self, topic: str, language: str, used_default_topic: bool = False
+    ) -> tuple[bool, list[dict[str, Any]]]:
+        """Return (has_match, candidates). No match when only generic fallback with no topic overlap.
+        When used_default_topic=True, never return - we didn't understand the request."""
+        if used_default_topic:
+            return (False, [])
+        candidates, used_fallback = self._counselor_candidates(topic, language)
+        if not candidates:
+            return (False, [])
+        if not used_fallback:
+            return (True, candidates)
+        return (False, [])
+
+    def _build_resource_response(
+        self, language: str, topic: str, used_history: bool, candidates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         cards = []
-        for item in self._resource_candidates(topic):
+        for item in candidates:
             action = "Watch" if item.get("type") == "video" else "Read"
             if language == "sw":
                 action = "Tazama" if item.get("type") == "video" else "Soma"
@@ -331,9 +394,11 @@ class RecommendationService:
             },
         }
 
-    def _build_counselor_response(self, language: str, topic: str, used_history: bool) -> dict[str, Any]:
+    def _build_counselor_response(
+        self, language: str, topic: str, used_history: bool, candidates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         cards = []
-        for item in self._counselor_candidates(topic, language):
+        for item in candidates:
             languages = ", ".join(item.get("languages", []))
             cards.append(
                 {
@@ -381,28 +446,50 @@ class RecommendationService:
             },
         }
 
+    def _crisis_candidates(self) -> list[dict[str, Any]]:
+        """Return crisis hotlines from crisis.json: Kenya first, then global."""
+        kenya = [h for h in self.crisis_hotlines if str(h.get("country", "")).strip() == "Kenya"]
+        others = [h for h in self.crisis_hotlines if str(h.get("country", "")).strip() != "Kenya"]
+        # Kenya: general crisis first, then suicide, then youth, then others
+        type_order = ("crisis_hotline", "suicide_prevention_hotline", "youth_crisis_hotline", "hospital_crisis_line", "health_support_hotline", "text_crisis_support", "global_directory")
+        def sort_key(h):
+            t = str(h.get("type", "")).strip().lower()
+            try:
+                return type_order.index(t) if t in type_order else 99
+            except ValueError:
+                return 99
+        kenya.sort(key=sort_key)
+        others.sort(key=sort_key)
+        return kenya[:5] + others[:3]  # Up to 5 Kenya + 3 global
+
     def _build_crisis_response(self, language: str, topic: str) -> dict[str, Any]:
         cards = []
-        crisis_candidates = [
-            item for item in self.counselors
-            if "crisis" in _normalize(str(item.get("specialization", ""))) or "hotline" in _normalize(str(item.get("title", "")))
-        ]
-        for item in crisis_candidates[:3]:
-            languages = ", ".join(item.get("languages", []))
+        for item in self._crisis_candidates():
+            org = str(item.get("organization", "")).strip()
+            langs = ", ".join(item.get("languages", []))
+            cta_label = "Call now" if language == "en" else "Piga simu sasa"
+            phone = item.get("phone")
+            website = item.get("website")
+            if website:
+                cta_href = website
+                cta_kind = "external"
+                cta_label = "Visit" if language == "en" else "Tembelea"
+            elif phone:
+                cta_href = f"tel:{phone.replace(' ', '')}"
+                cta_kind = "phone"
+            else:
+                continue
             cards.append(
                 {
-                    "id": _normalize(f"crisis-{item.get('name', '')}-{item.get('phone', '')}"),
+                    "id": _normalize(f"crisis-{item.get('name', '')}-{item.get('phone', website or '')}"),
                     "kind": "crisis",
                     "title": item.get("name"),
-                    "subtitle": item.get("title"),
-                    "description": item.get("clinic"),
-                    "badges": [str(item.get("location", "")), languages],
-                    "cta_label": "Call now" if language == "en" else "Piga simu sasa",
-                    "cta_href": f"tel:{item.get('phone')}",
-                    "cta_kind": "phone",
-                    "secondary_cta_label": "Email" if language == "en" else "Barua pepe",
-                    "secondary_cta_href": f"mailto:{item.get('email')}",
-                    "secondary_cta_kind": "email",
+                    "subtitle": org,
+                    "description": item.get("description"),
+                    "badges": [str(item.get("country", "")), str(item.get("availability", "")), langs],
+                    "cta_label": cta_label,
+                    "cta_href": cta_href,
+                    "cta_kind": cta_kind,
                 }
             )
 

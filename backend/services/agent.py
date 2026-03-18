@@ -46,7 +46,7 @@ async def _chat_completion(messages: list[dict]) -> str | None:
         return None
     payload = {
         "messages": messages,
-        "max_new_tokens": 180,
+        "max_new_tokens": 260,
         "temperature": 0,
         "top_p": 1.0,
         "repetition_penalty": 1.08,
@@ -162,6 +162,11 @@ class AgentService:
             return AgentReply(
                 text=str(route.recommendation.get("text", "")).strip(),
                 metadata=route.recommendation.get("metadata"),
+            )
+        if route.fallback_reply:
+            return AgentReply(
+                text=str(route.fallback_reply.get("text", "")).strip(),
+                metadata=route.fallback_reply.get("metadata"),
             )
 
         if lang == "sw":

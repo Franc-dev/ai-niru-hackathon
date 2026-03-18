@@ -6,6 +6,8 @@ is called, returning a polite redirect to mental health topics.
 """
 import re
 
+from backend.services.topic_focus import normalize_focus_text
+
 # Patterns that indicate off-topic (programming, coding, tech, math, etc.)
 # Match if any of these appear as a significant part of the message
 OFF_TOPIC_PATTERNS = (
@@ -35,6 +37,24 @@ _OFF_TOPIC_RE = re.compile(
     re.IGNORECASE,
 )
 
+_EXPLICIT_TECH_REQUEST_RE = re.compile(
+    r"\b(?:help|teach|show|explain|write|debug|fix|solve|build|make|create|learn)\b"
+    r"(?:\s+\w+){0,5}\s+\b(?:python|java|javascript|coding|code|codein|programming|program|script|function|algorithm)\b",
+    re.IGNORECASE,
+)
+
+_IMPLEMENTATION_REQUEST_RE = re.compile(
+    r"\b(?:code|codein|program|write|debug|fix|build|create)\b"
+    r"(?:\s+\w+){0,4}\s+\b(?:python|java|javascript)\b",
+    re.IGNORECASE,
+)
+
+_TECH_CONTEXT_REQUEST_RE = re.compile(
+    r"\b(?:python|java|javascript|coding|code|codein|programming|program|script|function|algorithm)\b"
+    r"(?:\s+\w+){0,4}\s+\b(?:help|tutorial|course|lesson|question|problem|debug|fix|explain)\b",
+    re.IGNORECASE,
+)
+
 # Canned redirects per language
 REDIRECT_EN = (
     "I'm here to support you with mental health and emotional well-being, "
@@ -59,7 +79,13 @@ def is_off_topic(message: str) -> bool:
     # Must be substantial (avoid false positives on "hi" or "ok")
     if len(text) < 10:
         return False
-    return bool(_OFF_TOPIC_RE.search(text))
+    normalized = normalize_focus_text(text)
+    return bool(
+        _OFF_TOPIC_RE.search(text)
+        or _EXPLICIT_TECH_REQUEST_RE.search(normalized)
+        or _IMPLEMENTATION_REQUEST_RE.search(normalized)
+        or _TECH_CONTEXT_REQUEST_RE.search(normalized)
+    )
 
 
 def get_off_topic_redirect(language: str = "en") -> str:

@@ -34,28 +34,37 @@ python training/scripts/serve_local_model.py --port 8002
 
 *(MentalChat-16K downloads from Hugging Face on first run.)*
 
-### 3. Expose the Port
-1. In the Studio, click the **"Ports"** tab (bottom panel)
-2. Add port **8002**
-3. Toggle **"Public"** to ON
-4. Copy the generated **public URL** (e.g. `https://xxxxxx-8002.lightning.ai`)
+### 3. Expose with Localtunnel
+Lightning's built-in port exposure may not work for API calls. Use **localtunnel** instead:
+
+1. **First terminal:** Model server (from step 2) running on port 8002
+2. **Second terminal** in the same Studio:
+   ```bash
+   npx localtunnel --port 8002 --subdomain whole-dryers-drum
+   ```
+   *(Pick any available subdomain; `whole-dryers-drum` is an example.)*
+
+3. You'll get a URL like `https://whole-dryers-drum.loca.lt`
 
 ### 4. Test the Endpoint
 ```bash
-curl -X POST https://<YOUR_STUDIO_URL>/v1/chat \
+curl -X POST https://whole-dryers-drum.loca.lt/v1/chat \
   -H "Content-Type: application/json" \
+  -H "Bypass-Tunnel-Reminder: true" \
   -d '{"messages": [{"role": "user", "content": "I feel anxious"}]}'
 ```
+
+*(The `Bypass-Tunnel-Reminder` header skips localtunnel's "Click to continue" page.)*
 
 ### 5. Connect Your Backend
 Update your backend `.env`:
 
 ```env
-LOCAL_MODEL_URL=https://<YOUR_STUDIO_URL>/v1/chat
-LOCAL_EMBEDDING_URL=https://<YOUR_STUDIO_URL>/v1/embeddings
+LOCAL_MODEL_URL=https://whole-dryers-drum.loca.lt/v1/chat
+LOCAL_EMBEDDING_URL=https://whole-dryers-drum.loca.lt/v1/embeddings
 ```
 
-Then restart your backend.
+Then restart your backend. The agent already sends `Bypass-Tunnel-Reminder` for localtunnel.
 
 ## Performance
 

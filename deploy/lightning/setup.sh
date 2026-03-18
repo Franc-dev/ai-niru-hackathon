@@ -33,8 +33,9 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); 
 echo "[4/4] Starting model server on port 8002..."
 echo ""
 echo "========================================="
-echo "  Expose port 8002 in Lightning Studio"
-echo "  Then set LOCAL_MODEL_URL=<your-url>/v1/chat"
+echo "  In a SECOND terminal, run localtunnel:"
+echo "  npx localtunnel --port 8002 --subdomain <your-subdomain>"
+echo "  Then set LOCAL_MODEL_URL=https://<your-subdomain>.loca.lt/v1/chat"
 echo "========================================="
 echo ""
 python training/scripts/serve_local_model.py --port 8002

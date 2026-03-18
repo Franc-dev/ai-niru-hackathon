@@ -25,10 +25,13 @@ export interface RecommendationCard {
 export interface MessageMetadata {
   language?: LanguageCode
   safety_refusal?: boolean
-  ui_type?: 'recommendations' | string
+  ui_type?: 'recommendations' | 'unavailable' | string
   recommendation_kind?: 'resources' | 'counselors' | 'crisis' | string
   recommendation_topic?: string
+  recommendation_focus_label?: string
   recommendation_reason?: 'current_message' | 'history' | string
+  request_kind?: 'counselor' | 'resource' | string
+  request_unavailable?: boolean
   cards?: RecommendationCard[]
 }
 

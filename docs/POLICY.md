@@ -3,7 +3,7 @@
 **Last Updated: March 2026**
 
 ## 1. Information We Collect
-AI NirU is designed with privacy in mind, ensuring user data protection. 
+ELEVANA AI is designed with privacy in mind, ensuring user data protection. 
 We collect:
 - **Chat/Voice Transcripts:** Temporarily processed to provide mental health support.
 - **Usage Metadata:** Anonymized data to improve the model's accuracy (e.g., language, category).

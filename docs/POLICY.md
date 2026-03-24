@@ -16,7 +16,7 @@ We collect:
 
 ## 3. Data Storage
 - Conversations are stored locally or in our secure database to provide a seamless user experience.
-- No personally identifiable information (PII) is required to use the basic features of AI NirU.
+- No personally identifiable information (PII) is required to use the basic features of ELEVANA AI.
 
 ## 4. Voice Data
 Voice data is processed in real-time. We do not store raw audio recordings; only the transcribed text is used for generating responses.
@@ -28,4 +28,4 @@ We use:
 - **Anthropic (Claude):** For real-time voice agent reasoning.
 
 ---
-*Note: AI NirU is a hackathon prototype and not a replacement for professional therapy or medical advice.*
+*Note ELEVANA AI is a hackathon prototype and not a replacement for professional therapy or medical advice.*

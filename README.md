@@ -14,10 +14,10 @@ Full-stack application with FastAPI backend and React TypeScript frontend.
 - Node.js 18+
 - MongoDB (local or Atlas)
   
-### Backend Setup
+### Back-end Setup
 
 ```bash
-cd backend
+cd back-end
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -61,4 +61,4 @@ See individual task files in `tasks/` directory for current work items.
 training ingoing
 ## License
 
-See LICENSE file.
+Have a look at the LICENSE file.

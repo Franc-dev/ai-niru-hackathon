@@ -1,7 +1,7 @@
 # Elevana - Safety Rules & Crisis Protocols
 
 ## 1. Overview
-Safety is the foundational principle of Elevana. We employ a layered approach to safety that includes hardcoded crisis filters, semantic guardrails, and mission-specific agent prompts.
+Safety is the foundational principle of Elevana. We employ a layered approach to safety that includes hard coded crisis filters, semantic guardrails, and mission-specific agent prompts.
 
 ## 2. Crisis Detection Protocol (High Priority)
 The Crisis Detection Tool (`4_serve_sklearn_rag.py`) is the most critical safety layer. It is executed **first** for every incoming chat message.
@@ -47,9 +47,7 @@ Hopewell Counselling - 0717 296 275
 PDO Kenya - 0774 354 618 (Monthly Support Group)
 Jawabu Therapy & Counselling - 0708 065 599
 6. **Visibility:** The UI highlights the emergency information with high prominence.
-
 ---
-
 ## 3. Semantic Guardrails (Off-Topic Filter)
 The Guardrails service (`backend/services/guardrails.py`) prevents the model from being misused for non-mental health purposes.
 
@@ -61,17 +59,13 @@ The system automatically identifies and redirects users who try to use Elevana f
 
 ### 3.2 Redirect Strategy
 Instead of a generic error, the system provides a polite redirect in the user's detected language (Swahili/English), explaining that its purpose is mental health and emotional well-being, and inviting the user to share their feelings.
-
 ---
-
 ## 4. Agent-Level Safety (Voice Agent)
 The Voice Agent (`voice_agent.py`) uses **Claude 4.5 Haiku** with a highly specialized system prompt that enforces:
 - **Empathetic Neutrality:** Staying present and caring without making medical diagnoses.
 - **Short Responses:** Preventing overwhelmed users from receiving long, complex paragraphs.
 - **No Formatting:** Ensuring the text-to-speech output is natural and easy to follow.
-
 ---
-
 ## 5. Implementation Status
 
 | Feature | Implementation Method | Status |
@@ -81,9 +75,7 @@ The Voice Agent (`voice_agent.py`) uses **Claude 4.5 Haiku** with a highly speci
 | RAG Confidence Gate | Similarity Threshold (0.35) | **Operational** |
 | Human Counselor Linking | Counselor Search Tool | **Operational** |
 | Resource Filtering | Resource Search Tool | **Operational** |
-
 ---
-
 ## 6. Escalation Flow (Internal Logic)
 
 ```
@@ -104,6 +96,5 @@ User Message
 │ [LAYER 3] Agent Reasoning       │──▶ [PROCESS] ──▶ Provide Empathetic Help
 └─────────────────────────────────┘
 ```
-
 ---
 *Last Updated: March 2026*
